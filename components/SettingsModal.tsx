@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { type Theme } from '../types';
 
@@ -50,13 +51,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div>
             <h4 className="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Theme</h4>
             <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-900/50 rounded-md">
-                <label htmlFor="theme-toggle" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Enable Dark Mode
-                </label>
-                <div className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" checked={theme === 'dark'} onChange={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')} id="theme-toggle" className="sr-only peer" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 pr-4">
+                  Dark Mode
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked={theme === 'dark'} onChange={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')} className="sr-only peer" />
                     <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-cyan-300 dark:peer-focus:ring-cyan-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
-                </div>
+                </label>
             </div>
           </div>
           
@@ -82,13 +83,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="space-y-4">
              <h4 className="text-md font-medium text-gray-800 dark:text-gray-200">Automated Event Discovery</h4>
              <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-900/50 rounded-md">
-                <label htmlFor="auto-discover-toggle" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 pr-4">
                   Enable automatic background search
-                </label>
-                <div className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" checked={autoDiscover} onChange={e => setAutoDiscover(e.target.checked)} id="auto-discover-toggle" className="sr-only peer" />
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked={autoDiscover} onChange={e => setAutoDiscover(e.target.checked)} className="sr-only peer" />
                     <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-cyan-300 dark:peer-focus:ring-cyan-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
-                </div>
+                </label>
             </div>
              {autoDiscover && (
                 <div>

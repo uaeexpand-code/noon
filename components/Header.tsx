@@ -140,7 +140,7 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onO
                      </button>
                  ))}
             </div>
-            <div className="relative" ref={summaryMenuRef}>
+            <div className="relative z-10" ref={summaryMenuRef}>
               <button
                 onClick={() => setIsSummaryMenuOpen(prev => !prev)}
                 disabled={isSendingSummary || !discordWebhookUrl}
@@ -151,7 +151,7 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onO
                 {isSendingSummary ? <LoadingSpinner /> : <PaperAirplaneIcon />}
               </button>
               {isSummaryMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-20 border border-gray-200 dark:border-gray-600">
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-30 border border-gray-200 dark:border-gray-600">
                   <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
                     <li>
                       <a href="#" onClick={(e) => { e.preventDefault(); handleSendSummary('7days'); }} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">Next 7 Days</a>
