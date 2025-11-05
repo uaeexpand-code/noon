@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { type Theme, type AiProvider } from '../types';
 import { testAiConnection } from '../services/aiService';
@@ -157,12 +156,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {/* --- Theme --- */}
           <div>
             <h4 className="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Theme</h4>
-            <label className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-900/50 rounded-md cursor-pointer">
+            <label htmlFor="theme-toggle-input" className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-900/50 rounded-md cursor-pointer">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 pr-4">
-                  Enable Dark Mode
+                  Dark Mode
                 </span>
                 <div className="relative inline-flex items-center">
-                    <input type="checkbox" checked={theme === 'dark'} onChange={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')} className="sr-only peer" />
+                    <input type="checkbox" id="theme-toggle-input" checked={theme === 'dark'} onChange={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')} className="sr-only peer" />
                     <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-cyan-300 dark:peer-focus:ring-cyan-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
                 </div>
             </label>
@@ -179,12 +178,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {/* --- Automated Discovery --- */}
           <div className="space-y-4">
              <h4 className="text-md font-medium text-gray-800 dark:text-gray-200">Automated Event Discovery</h4>
-             <label className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-900/50 rounded-md cursor-pointer">
+             <label htmlFor="auto-discover-toggle-input" className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-900/50 rounded-md cursor-pointer">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 pr-4">
                   Enable automatic background search
                 </span>
                 <div className="relative inline-flex items-center">
-                    <input type="checkbox" checked={autoDiscover} onChange={e => setAutoDiscover(e.target.checked)} className="sr-only peer" />
+                    <input type="checkbox" id="auto-discover-toggle-input" checked={autoDiscover} onChange={e => setAutoDiscover(e.target.checked)} className="sr-only peer" />
                     <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-cyan-300 dark:peer-focus:ring-cyan-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
                 </div>
             </label>

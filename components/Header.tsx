@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { SummaryRange } from '../types';
 
@@ -106,7 +105,7 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onO
   const views: ViewMode[] = ['month', 'week', 'year'];
 
   return (
-    <header className="flex flex-wrap items-center justify-between gap-4 mb-4 sm:mb-6 p-4 rounded-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-md">
+    <header className="relative z-10 flex flex-wrap items-center justify-between gap-4 mb-4 sm:mb-6 p-4 rounded-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-md">
         <div className="flex items-center space-x-2">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white hidden sm:block">Seller's Calendar</h1>
             <span className="text-xl sm:text-2xl font-bold text-cyan-500 dark:text-cyan-400">UAE</span>
@@ -140,7 +139,7 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onO
                      </button>
                  ))}
             </div>
-            <div className="relative z-30" ref={summaryMenuRef}>
+            <div className="relative" ref={summaryMenuRef}>
               <button
                 onClick={() => setIsSummaryMenuOpen(prev => !prev)}
                 disabled={isSendingSummary || !discordWebhookUrl}
@@ -151,7 +150,7 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onO
                 {isSendingSummary ? <LoadingSpinner /> : <PaperAirplaneIcon />}
               </button>
               {isSummaryMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-40 border border-gray-200 dark:border-gray-600">
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-20 border border-gray-200 dark:border-gray-600">
                   <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
                     <li>
                       <a href="#" onClick={(e) => { e.preventDefault(); handleSendSummary('7days'); }} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">Next 7 Days</a>
