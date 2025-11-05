@@ -213,7 +213,7 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, date, e
           />
           
           {/* FIX: The object passed to IdeaGenerator must match one of the types in the union prop type. 
-              Changing `title` to `name` makes the object structurally compatible with the `SpecialDate` type. */}
+              Changing 'title' to 'name' makes the object structurally compatible with the 'SpecialDate' type. */}
           <IdeaGenerator event={{ name: title || 'New Event', date, category: 'Custom Event' }} />
 
           <div className="pt-4 flex justify-between items-center">
