@@ -1,0 +1,14 @@
+{
+  "name": "uae-calendar-server",
+  "version": "1.0.0",
+  "description": "Server for the UAE Seller's Smart Calendar",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@google/genai": "^1.28.0",
+    "express": "^4.19.2"
+  }
+}
