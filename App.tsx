@@ -135,7 +135,18 @@ const App: React.FC = () => {
       const existingEventKeys = new Set(allEvents.map(e => `${(e.type === 'user' ? e.title : e.name)}_${e.date.toDateString()}`));
       const uniqueNewEvents = newEvents.filter(newEvent => !existingEventKeys.has(`${newEvent.name}_${newEvent.date.toDateString()}`));
 
-      setDiscoveredEvents(prev => [...prev, ...uniqueNewEvents]);
+      if (uniqueNewEvents.length > 0) {
+        setDiscoveredEvents(prev => {
+            const updatedEvents = [...prev, ...uniqueNewEvents];
+            // Persist the newly discovered events to the server
+            fetch('/api/discovered-events', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedEvents)
+            }).catch(error => console.error("Failed to save discovered events:", error));
+            return updatedEvents;
+        });
+      }
     } catch (error) {
       console.error("Failed to discover events:", error);
       alert("Failed to discover events. Your AI provider might be configured incorrectly. Check settings and the console.");

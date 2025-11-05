@@ -213,6 +213,11 @@ app.get('/api/discovered-events', async (req, res) => {
     res.json(events);
 });
 
+app.post('/api/discovered-events', async (req, res) => {
+    await writeJSON(DISCOVERED_EVENTS_FILE, req.body);
+    res.status(200).json({ message: 'Discovered events saved.' });
+});
+
 app.get('/api/user-events', async (req, res) => {
     const events = await readJSON(USER_EVENTS_FILE, []);
     res.json(events);
