@@ -211,7 +211,6 @@ app.get('/api/settings', async (req, res) => {
         webhookUrl: '',
         isAutoDiscoverEnabled: false,
         autoDiscoverFrequency: 2,
-        theme: 'dark',
         lastAutoDiscoverRun: 0,
         aiProvider: 'gemini',
         openaiApiKey: '',
