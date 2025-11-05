@@ -136,16 +136,8 @@ const App: React.FC = () => {
       const uniqueNewEvents = newEvents.filter(newEvent => !existingEventKeys.has(`${newEvent.name}_${newEvent.date.toDateString()}`));
 
       if (uniqueNewEvents.length > 0) {
-        setDiscoveredEvents(prev => {
-            const updatedEvents = [...prev, ...uniqueNewEvents];
-            // Persist the newly discovered events to the server
-            fetch('/api/discovered-events', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedEvents)
-            }).catch(error => console.error("Failed to save discovered events:", error));
-            return updatedEvents;
-        });
+        // The new useEffect hook will handle saving automatically.
+        setDiscoveredEvents(prev => [...prev, ...uniqueNewEvents]);
       }
     } catch (error) {
       console.error("Failed to discover events:", error);
@@ -185,7 +177,7 @@ const App: React.FC = () => {
         const response = await fetch('/api/discovered-events');
         if (!response.ok) throw new Error(`Server responded with ${response.status}`);
         const serverEvents = await response.json();
-        const formattedEvents = serverEvents.map((e: any) => ({...e, date: new Date(e.date + 'T00:00:00')}));
+        const formattedEvents = serverEvents.map((e: any) => ({...e, date: new Date(e.date)}));
         setDiscoveredEvents(formattedEvents);
       } catch (error) { console.error('Failed to load discovered events:', error); }
 
@@ -219,6 +211,16 @@ const App: React.FC = () => {
         body: JSON.stringify(userEvents)
     }).catch(error => console.error("Failed to save user events:", error));
   }, [userEvents]);
+
+  // Save discovered events to server when they change
+  useEffect(() => {
+    if (isInitialMount.current) return;
+    fetch('/api/discovered-events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(discoveredEvents)
+    }).catch(error => console.error("Failed to save discovered events:", error));
+  }, [discoveredEvents]);
 
   // Save chat history to server when it changes
   useEffect(() => {

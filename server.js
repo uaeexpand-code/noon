@@ -156,18 +156,27 @@ const runDiscoveryTask = async () => {
     const prompt = `As an expert market researcher for UAE e-commerce, identify key events in the UAE for ${monthName} ${year}. I need a JSON array of objects. Each object must have 'date' (string in YYYY-MM-DD format), 'name' (string), and 'category' (string). Include: 'E-commerce Sale', 'Global Event', 'Cultural', 'Sporting', 'Trending'.`;
 
     try {
-        let newEventsRaw;
+        let newEventsRaw = []; // Initialize as an empty array to prevent crashes
+        
         if (aiProvider === 'openai') {
+            if (!openaiApiKey) throw new Error("OpenAI API key not set for discovery task.");
             newEventsRaw = await handleOpenAiRequest(openaiApiKey, [{ role: 'user', content: prompt }], true);
         } else if (aiProvider === 'openrouter') {
+            if (!openrouterApiKey) throw new Error("OpenRouter API key not set for discovery task.");
             newEventsRaw = await handleOpenRouterRequest(openrouterApiKey, [{ role: 'user', content: prompt }], true);
-        } else {
+        } else if (aiProvider === 'gemini') {
             newEventsRaw = await handleGeminiRequest(prompt, true);
+        } else {
+            console.log(`Automated discovery skipped: No valid AI provider configured (found: "${aiProvider}").`);
         }
 
         const discoveredEvents = await readJSON(DISCOVERED_EVENTS_FILE, []);
         const existingEventKeys = new Set(discoveredEvents.map(e => `${e.name}_${e.date}`));
-        const uniqueNewEvents = newEventsRaw.filter(e => e.date && e.name && e.category && !existingEventKeys.has(`${e.name}_${e.date}`));
+        
+        // Ensure newEventsRaw is an array before filtering to prevent crashes if the AI returns malformed data
+        const uniqueNewEvents = Array.isArray(newEventsRaw)
+            ? newEventsRaw.filter(e => e.date && e.name && e.category && !existingEventKeys.has(`${e.name}_${e.date}`))
+            : [];
 
         if (uniqueNewEvents.length > 0) {
             console.log(`Found ${uniqueNewEvents.length} new events!`);
@@ -182,7 +191,10 @@ const runDiscoveryTask = async () => {
         settings.lastAutoDiscoverRun = now;
         await writeJSON(SETTINGS_FILE, settings);
     } catch (error) {
-        console.error('Error during automated discovery task:', error);
+        console.error('Error during automated discovery task:', error.message);
+        if (webhookUrl) {
+            await sendDiscordWebhook(webhookUrl, { embeds: [{ title: `🤖 Event Discovery Failed`, description: `The automated task failed to run. Please check the server logs.\nError: \`${error.message}\``, color: 0xE74C3C }] });
+        }
     }
 };
 
@@ -331,5 +343,6 @@ app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
   cron.schedule('0 3 * * *', runDiscoveryTask);
   console.log('Scheduled automated event discovery to run daily at 3:00 AM.');
+  // Run once on startup after a short delay to allow the server to initialize
   setTimeout(runDiscoveryTask, 5000); 
 });
