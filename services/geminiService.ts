@@ -1,11 +1,11 @@
 
 import { Type } from "@google/genai";
-import { type SpecialDate, type CalendarEvent, type ChatMessage } from '../types';
+import { type SpecialDate, type CalendarEvent, type ChatMessage, type AiProvider } from '../types';
 
 // Helper function to handle API calls to our own server proxy
 async function fetchFromProxy(action: string, body: object) {
   try {
-    const response = await fetch(`/api/gemini/${action}`, {
+    const response = await fetch(`/api/ai/${action}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -24,17 +24,26 @@ async function fetchFromProxy(action: string, body: object) {
   }
 }
 
+export const testAiConnection = async (provider: AiProvider, apiKey?: string) => {
+    try {
+        const response = await fetch('/api/ai/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ provider, apiKey }),
+        });
+        return response.json(); // Should return { success: true } or { success: false, error: '...' }
+    } catch (error) {
+        console.error(`Error testing AI connection for "${provider}":`, error);
+        return { success: false, error: 'Client-side error during test.' };
+    }
+};
+
+
 export const generateMarketingIdeas = async (event: SpecialDate | { name: string; category: string }): Promise<string[]> => {
   try {
     const ideas = await fetchFromProxy('generateMarketingIdeas', { 
         event,
-        schema: {
-            type: Type.ARRAY,
-            items: {
-                type: Type.STRING,
-                description: 'A single marketing idea.'
-            }
-        }
+        // The schema is now handled by the server based on the provider
     });
     
     if (Array.isArray(ideas) && ideas.every(item => typeof item === 'string')) {
@@ -53,27 +62,7 @@ export const discoverEventsForMonth = async (year: number, month: number): Promi
         const discovered = await fetchFromProxy('discoverEvents', {
             year,
             month,
-            schema: {
-                type: Type.ARRAY,
-                items: {
-                    type: Type.OBJECT,
-                    properties: {
-                        date: {
-                            type: Type.STRING,
-                            description: "The date of the event in YYYY-MM-DD format.",
-                        },
-                        name: {
-                            type: Type.STRING,
-                            description: "The name of the event.",
-                        },
-                        category: {
-                            type: Type.STRING,
-                            description: "The category: E-commerce Sale, Global Event, Cultural, Sporting, Trending.",
-                        },
-                    },
-                    required: ["date", "name", "category"],
-                },
-            },
+            // The schema is now handled by the server based on the provider
         });
         
         if (Array.isArray(discovered)) {

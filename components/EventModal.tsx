@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { type UserEvent, type SpecialDate } from '../types';
-import { generateMarketingIdeas } from '../services/geminiService';
+import { generateMarketingIdeas } from '../services/aiService';
 import { sendDiscordWebhook } from '../services/discordService';
 
 interface EventModalProps {

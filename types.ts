@@ -22,3 +22,5 @@ export interface ChatMessage {
 export type Theme = 'light' | 'dark';
 
 export type SummaryRange = '7days' | 'month' | 'year';
+
+export type AiProvider = 'gemini' | 'openai' | 'openrouter';

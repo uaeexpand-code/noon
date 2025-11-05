@@ -1,11 +1,12 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Calendar } from './components/Calendar';
 import { EventModal } from './components/EventModal';
 import { Header } from './components/Header';
 import { SettingsModal } from './components/SettingsModal';
-import { type UserEvent, type SpecialDate, type CalendarEvent, type ChatMessage, type Theme, type SummaryRange } from './types';
+import { type UserEvent, type SpecialDate, type CalendarEvent, type ChatMessage, type Theme, type SummaryRange, type AiProvider } from './types';
 import { getSpecialDates } from './services/uaeDatesService';
-import { discoverEventsForMonth, getChatResponse } from './services/geminiService';
+import { discoverEventsForMonth, getChatResponse } from './services/aiService';
 import { sendDiscordWebhook } from './services/discordService';
 
 // --- Chat Modal Component ---
@@ -97,12 +98,16 @@ const App: React.FC = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   
-  // Settings state, now loaded from server
+  // --- Settings State ---
   const [discordWebhookUrl, setDiscordWebhookUrl] = useState('');
   const [isAutoDiscoverEnabled, setIsAutoDiscoverEnabled] = useState(false);
   const [autoDiscoverFrequency, setAutoDiscoverFrequency] = useState(2);
   const [theme, setTheme] = useState<Theme>('dark');
   const [lastAutoDiscoverRun, setLastAutoDiscoverRun] = useState(0);
+  const [aiProvider, setAiProvider] = useState<AiProvider>('gemini');
+  const [openaiApiKey, setOpenaiApiKey] = useState('');
+  const [openrouterApiKey, setOpenrouterApiKey] = useState('');
+
 
   const specialDates = useMemo(
     () => getSpecialDates(currentDate.getFullYear()),
@@ -129,11 +134,10 @@ const App: React.FC = () => {
       const existingEventKeys = new Set(allEvents.map(e => `${(e.type === 'user' ? e.title : e.name)}_${e.date.toDateString()}`));
       const uniqueNewEvents = newEvents.filter(newEvent => !existingEventKeys.has(`${newEvent.name}_${newEvent.date.toDateString()}`));
 
-      // We add to client-side discovered events for immediate UI update.
-      // The server will handle persistent storage.
       setDiscoveredEvents(prev => [...prev, ...uniqueNewEvents]);
     } catch (error) {
       console.error("Failed to discover events:", error);
+      alert("Failed to discover events. Your AI provider might be configured incorrectly. Check settings and the console.");
     } finally {
       setIsDiscovering(false);
     }
@@ -159,6 +163,10 @@ const App: React.FC = () => {
         setAutoDiscoverFrequency(settings.autoDiscoverFrequency || 2);
         setTheme(settings.theme || 'dark');
         setLastAutoDiscoverRun(settings.lastAutoDiscoverRun || 0);
+        setAiProvider(settings.aiProvider || 'gemini');
+        setOpenaiApiKey(settings.openaiApiKey || '');
+        setOpenrouterApiKey(settings.openrouterApiKey || '');
+
       } catch (error) {
         console.error('Failed to load settings from server:', error);
       }
@@ -205,12 +213,23 @@ const App: React.FC = () => {
     closeModal();
   };
 
-  const handleSaveSettings = async (settings: { webhookUrl: string; isAutoDiscoverEnabled: boolean; autoDiscoverFrequency: number; theme: Theme; }) => {
+  const handleSaveSettings = async (settings: { 
+      webhookUrl: string; 
+      isAutoDiscoverEnabled: boolean; 
+      autoDiscoverFrequency: number; 
+      theme: Theme; 
+      aiProvider: AiProvider;
+      openaiApiKey: string;
+      openrouterApiKey: string;
+  }) => {
     // Update state immediately for responsive UI
     setDiscordWebhookUrl(settings.webhookUrl);
     setIsAutoDiscoverEnabled(settings.isAutoDiscoverEnabled);
     setAutoDiscoverFrequency(settings.autoDiscoverFrequency);
     setTheme(settings.theme);
+    setAiProvider(settings.aiProvider);
+    setOpenaiApiKey(settings.openaiApiKey);
+    setOpenrouterApiKey(settings.openrouterApiKey);
     
     // Save to server
     try {
@@ -383,6 +402,9 @@ const App: React.FC = () => {
           isAutoDiscoverEnabled={isAutoDiscoverEnabled}
           autoDiscoverFrequency={autoDiscoverFrequency}
           currentTheme={theme}
+          currentAiProvider={aiProvider}
+          currentOpenaiApiKey={openaiApiKey}
+          currentOpenrouterApiKey={openrouterApiKey}
         />
       )}
       <ChatModal
