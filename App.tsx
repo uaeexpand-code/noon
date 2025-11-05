@@ -98,14 +98,11 @@ const App: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  
+  // Settings for automated discovery
+  const [isAutoDiscoverEnabled, setIsAutoDiscoverEnabled] = useState(false);
+  const [autoDiscoverFrequency, setAutoDiscoverFrequency] = useState(2);
 
-
-  useEffect(() => {
-    const savedWebhookUrl = localStorage.getItem('discordWebhookUrl');
-    if (savedWebhookUrl) {
-      setDiscordWebhookUrl(savedWebhookUrl);
-    }
-  }, []);
 
   const specialDates = useMemo(
     () => getSpecialDates(currentDate.getFullYear()),
@@ -120,8 +117,56 @@ const App: React.FC = () => {
     ];
     return combined.sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [specialDates, userEvents, discoveredEvents]);
-  
 
+  const handleDiscoverEvents = async (): Promise<boolean> => {
+    setIsDiscovering(true);
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    
+    try {
+      const newEvents = await discoverEventsForMonth(year, month);
+      
+      const existingEventKeys = new Set(allEvents.map(e => `${(e.type === 'user' ? e.title : e.name)}_${e.date.toDateString()}`));
+      const uniqueNewEvents = newEvents.filter(newEvent => !existingEventKeys.has(`${newEvent.name}_${newEvent.date.toDateString()}`));
+
+      setDiscoveredEvents(prev => [...prev, ...uniqueNewEvents]);
+      return true;
+    } catch (error) {
+      console.error("Failed to discover events:", error);
+      return false;
+    } finally {
+      setIsDiscovering(false);
+    }
+  };
+
+  useEffect(() => {
+    // Load all settings from localStorage on initial app load
+    const savedWebhookUrl = localStorage.getItem('discordWebhookUrl') || '';
+    const savedAutoDiscoverEnabled = localStorage.getItem('isAutoDiscoverEnabled') === 'true';
+    const savedAutoDiscoverFrequency = parseInt(localStorage.getItem('autoDiscoverFrequency') || '2', 10);
+    
+    setDiscordWebhookUrl(savedWebhookUrl);
+    setIsAutoDiscoverEnabled(savedAutoDiscoverEnabled);
+    setAutoDiscoverFrequency(savedAutoDiscoverFrequency);
+
+    // Check if it's time to run automated discovery
+    if (savedAutoDiscoverEnabled) {
+      const lastRun = parseInt(localStorage.getItem('lastAutoDiscoverRun') || '0', 10);
+      const now = new Date().getTime();
+      const frequencyInMs = savedAutoDiscoverFrequency * 24 * 60 * 60 * 1000;
+
+      if (now - lastRun > frequencyInMs) {
+        console.log("Automated discovery interval has passed. Running now...");
+        handleDiscoverEvents().then(success => {
+          if (success) {
+            localStorage.setItem('lastAutoDiscoverRun', new Date().getTime().toString());
+            console.log("Automated discovery successful. Timestamp updated.");
+          }
+        });
+      }
+    }
+  }, []); // Empty dependency array ensures this runs only once on mount
+  
   const handleDateSelect = (date: Date, event?: UserEvent) => {
     setSelectedDate(date);
     if(event) {
@@ -150,29 +195,18 @@ const App: React.FC = () => {
     closeModal();
   };
 
-  const handleSaveSettings = (webhookUrl: string) => {
-    setDiscordWebhookUrl(webhookUrl);
-    localStorage.setItem('discordWebhookUrl', webhookUrl);
-    setIsSettingsOpen(false);
-  };
-
-  const handleDiscoverEvents = async () => {
-    setIsDiscovering(true);
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
+  const handleSaveSettings = (settings: { webhookUrl: string; isAutoDiscoverEnabled: boolean; autoDiscoverFrequency: number; }) => {
+    // Update state
+    setDiscordWebhookUrl(settings.webhookUrl);
+    setIsAutoDiscoverEnabled(settings.isAutoDiscoverEnabled);
+    setAutoDiscoverFrequency(settings.autoDiscoverFrequency);
     
-    try {
-      const newEvents = await discoverEventsForMonth(year, month);
-      
-      const existingEventKeys = new Set(allEvents.map(e => `${(e.type === 'user' ? e.title : e.name)}_${e.date.toDateString()}`));
-      const uniqueNewEvents = newEvents.filter(newEvent => !existingEventKeys.has(`${newEvent.name}_${newEvent.date.toDateString()}`));
-
-      setDiscoveredEvents(prev => [...prev, ...uniqueNewEvents]);
-    } catch (error) {
-      console.error("Failed to discover events:", error);
-    } finally {
-      setIsDiscovering(false);
-    }
+    // Save to localStorage
+    localStorage.setItem('discordWebhookUrl', settings.webhookUrl);
+    localStorage.setItem('isAutoDiscoverEnabled', String(settings.isAutoDiscoverEnabled));
+    localStorage.setItem('autoDiscoverFrequency', String(settings.autoDiscoverFrequency));
+    
+    setIsSettingsOpen(false);
   };
 
   const handleSendSummary = async () => {
@@ -335,6 +369,8 @@ const App: React.FC = () => {
           onClose={() => setIsSettingsOpen(false)}
           onSave={handleSaveSettings}
           currentWebhookUrl={discordWebhookUrl}
+          isAutoDiscoverEnabled={isAutoDiscoverEnabled}
+          autoDiscoverFrequency={autoDiscoverFrequency}
         />
       )}
       <ChatModal
