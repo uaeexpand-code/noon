@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { type CalendarEvent, type UserEvent } from '../types';
 
 type ViewMode = 'month' | 'week' | 'year';
@@ -181,7 +181,22 @@ const YearView: React.FC<Omit<CalendarProps, 'viewMode' | 'onDateSelect'>> = ({ 
 // --- Main Calendar Switcher Component ---
 
 export const Calendar: React.FC<CalendarProps> = (props) => {
-  
+  const [animationClass, setAnimationClass] = useState('animate-fadeIn');
+  const prevDateRef = useRef(props.currentDate);
+  const prevViewModeRef = useRef(props.viewMode);
+
+  useEffect(() => {
+    if (prevViewModeRef.current !== props.viewMode) {
+      setAnimationClass('animate-fadeIn');
+    } else if (prevDateRef.current.getTime() < props.currentDate.getTime()) {
+      setAnimationClass('animate-slideInLeft');
+    } else if (prevDateRef.current.getTime() > props.currentDate.getTime()) {
+      setAnimationClass('animate-slideInRight');
+    }
+    prevDateRef.current = props.currentDate;
+    prevViewModeRef.current = props.viewMode;
+  }, [props.currentDate, props.viewMode]);
+
   const renderView = () => {
     switch (props.viewMode) {
       case 'year':
@@ -195,8 +210,10 @@ export const Calendar: React.FC<CalendarProps> = (props) => {
   };
 
   return (
-    <div className="bg-gray-800/60 backdrop-blur-xl rounded-xl shadow-2xl p-4 border border-white/10 animate-fadeIn">
-      {renderView()}
+    <div className="bg-gray-800/60 backdrop-blur-xl rounded-xl shadow-2xl p-4 border border-white/10">
+       <div key={props.currentDate.toISOString() + props.viewMode} className={animationClass}>
+          {renderView()}
+       </div>
     </div>
   );
 };
