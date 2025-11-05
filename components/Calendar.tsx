@@ -16,17 +16,17 @@ interface CalendarProps {
 // --- Styling and Utility Functions ---
 
 const getEventTypeStyle = (event: CalendarEvent) => {
-  if (event.type === 'user') return 'bg-purple-600/80 hover:bg-purple-500 cursor-pointer';
-  if (event.type === 'discovered') return 'bg-teal-600/80';
+  if (event.type === 'user') return 'bg-purple-600 dark:bg-purple-600/80 hover:bg-purple-500 text-white cursor-pointer';
+  if (event.type === 'discovered') return 'bg-teal-600 dark:bg-teal-600/80 text-white';
   
   switch (event.category) {
-    case 'National Holiday': return 'bg-red-500/80';
-    case 'Religious': return 'bg-green-500/80';
-    case 'Season': return 'bg-blue-500/80';
-    case 'E-commerce Sale': return 'bg-pink-500/80';
-    case 'Global Event': return 'bg-indigo-500/80';
-    case 'Commercial': return 'bg-yellow-500/80 text-gray-900';
-    default: return 'bg-gray-600/80';
+    case 'National Holiday': return 'bg-red-500 dark:bg-red-500/80 text-white';
+    case 'Religious': return 'bg-green-600 dark:bg-green-500/80 text-white';
+    case 'Season': return 'bg-blue-500 dark:bg-blue-500/80 text-white';
+    case 'E-commerce Sale': return 'bg-pink-500 dark:bg-pink-500/80 text-white';
+    case 'Global Event': return 'bg-indigo-500 dark:bg-indigo-500/80 text-white';
+    case 'Commercial': return 'bg-amber-400 dark:bg-yellow-500/80 text-gray-900';
+    default: return 'bg-gray-500 dark:bg-gray-600/80 text-white';
   }
 };
 
@@ -49,7 +49,7 @@ const DayCell: React.FC<{
     onDateSelect(date, event);
   };
 
-  const cellClasses = `relative flex flex-col p-2 border border-gray-200 dark:border-gray-700/50 transition-colors duration-200 group overflow-hidden ${isCurrentMonth ? 'bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700/70 cursor-pointer' : 'bg-gray-50 dark:bg-gray-900/50 text-gray-400 dark:text-gray-500'} ${isTall ? 'min-h-[120px]' : 'aspect-square'}`;
+  const cellClasses = `relative flex flex-col p-2 border border-slate-200 dark:border-gray-700/50 transition-colors duration-200 group overflow-hidden ${isCurrentMonth ? 'bg-white dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-gray-700/70 cursor-pointer' : 'bg-slate-50 dark:bg-gray-900/50 text-gray-400 dark:text-gray-500'} ${isTall ? 'min-h-[120px]' : 'aspect-square'}`;
   const dayNumberClasses = `text-xs sm:text-sm font-semibold flex items-center justify-center h-6 w-6 rounded-full transition-colors duration-200 ${isToday ? 'bg-cyan-500 text-white' : 'text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white'}`;
   
   return (
@@ -62,7 +62,7 @@ const DayCell: React.FC<{
            <div
               key={event.type === 'user' ? event.id : event.name + index}
               onClick={(e) => event.type === 'user' && handleEventClick(e, event)}
-              className={`text-xs px-1.5 py-0.5 rounded-md text-white truncate ${getEventTypeStyle(event)}`}
+              className={`text-xs px-1.5 py-0.5 rounded-md truncate ${getEventTypeStyle(event)}`}
             >
               {event.type === 'user' ? event.title : event.name}
             </div>
@@ -82,7 +82,7 @@ const MonthView: React.FC<Omit<CalendarProps, 'viewMode' | 'setViewMode' | 'setC
     const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     const calendarDays = [];
-    for (let i = 0; i < firstDayOfMonth; i++) calendarDays.push(<div key={`empty-start-${i}`} className="aspect-square bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700/50" />);
+    for (let i = 0; i < firstDayOfMonth; i++) calendarDays.push(<div key={`empty-start-${i}`} className="aspect-square bg-slate-50 dark:bg-gray-900/50 border border-slate-200 dark:border-gray-700/50" />);
 
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
@@ -92,7 +92,7 @@ const MonthView: React.FC<Omit<CalendarProps, 'viewMode' | 'setViewMode' | 'setC
   
     const totalCells = firstDayOfMonth + daysInMonth;
     const remainingCells = (7 - (totalCells % 7)) % 7;
-    for (let i = 0; i < remainingCells; i++) calendarDays.push(<div key={`empty-end-${i}`} className="aspect-square bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700/50" />);
+    for (let i = 0; i < remainingCells; i++) calendarDays.push(<div key={`empty-end-${i}`} className="aspect-square bg-slate-50 dark:bg-gray-900/50 border border-slate-200 dark:border-gray-700/50" />);
 
     return (
         <>
@@ -156,7 +156,7 @@ const YearView: React.FC<Omit<CalendarProps, 'viewMode' | 'onDateSelect'>> = ({ 
                 const monthEvents = events.filter(e => e.date.getFullYear() === year && e.date.getMonth() === month);
 
                 return (
-                    <div key={month} className="p-3 bg-white dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70" onClick={() => handleMonthClick(monthDate)}>
+                    <div key={month} className="p-3 bg-white dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-700/70 border border-slate-200 dark:border-transparent" onClick={() => handleMonthClick(monthDate)}>
                         <h4 className={`font-bold text-center mb-2 ${today.getFullYear() === year && today.getMonth() === month ? 'text-cyan-500 dark:text-cyan-400' : 'text-gray-900 dark:text-white'}`}>{monthName}</h4>
                         <div className="grid grid-cols-7 gap-1 text-xs text-center text-gray-400 dark:text-gray-500">
                             {['S','M','T','W','T','F','S'].map(d=><div key={d}>{d}</div>)}
@@ -195,7 +195,7 @@ export const Calendar: React.FC<CalendarProps> = (props) => {
   };
 
   return (
-    <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-xl p-4">
+    <div className="bg-white dark:bg-gray-800/80 rounded-lg shadow-xl p-4 border border-slate-200 dark:border-transparent">
       {renderView()}
     </div>
   );

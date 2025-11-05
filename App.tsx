@@ -37,21 +37,21 @@ const ChatModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-gray-100 dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg h-[80vh] flex flex-col border border-gray-300 dark:border-gray-700" onClick={e => e.stopPropagation()}>
-        <div className="p-4 border-b border-gray-300 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg h-[80vh] flex flex-col border border-slate-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
+        <div className="p-4 border-b border-slate-200 dark:border-gray-700">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white text-center">Chat with your Calendar</h3>
         </div>
         <div className="flex-grow p-4 overflow-y-auto space-y-4">
           {messages.map((msg, index) => (
             <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.role === 'user' ? 'bg-cyan-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'}`}>
+              <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.role === 'user' ? 'bg-cyan-600 text-white' : 'bg-slate-200 dark:bg-gray-700 text-gray-900 dark:text-white'}`}>
                 <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
               </div>
             </div>
           ))}
           {isLoading && (
             <div className="flex justify-start">
-              <div className="max-w-xs md:max-w-md p-3 rounded-lg bg-gray-200 dark:bg-gray-700">
+              <div className="max-w-xs md:max-w-md p-3 rounded-lg bg-slate-200 dark:bg-gray-700">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:0.2s]"></div>
@@ -62,7 +62,7 @@ const ChatModal: React.FC<{
           )}
           <div ref={messagesEndRef} />
         </div>
-        <div className="p-4 border-t border-gray-300 dark:border-gray-700">
+        <div className="p-4 border-t border-slate-200 dark:border-gray-700">
           <div className="flex items-center space-x-2">
             <input
               type="text"
@@ -70,7 +70,7 @@ const ChatModal: React.FC<{
               onChange={e => setInput(e.target.value)}
               onKeyPress={e => e.key === 'Enter' && !isLoading && handleSend()}
               placeholder="Ask about your events..."
-              className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-400 dark:border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-slate-300 dark:border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500 text-gray-900 dark:text-white"
               disabled={isLoading}
             />
             <button onClick={handleSend} disabled={isLoading || !input.trim()} className="px-4 py-2 text-sm font-medium text-white bg-cyan-600 rounded-md hover:bg-cyan-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors">
@@ -149,9 +149,9 @@ const App: React.FC = () => {
   
   useEffect(() => {
     const body = document.body;
-    body.classList.remove('light', 'dark', 'bg-gray-900', 'bg-white');
+    body.classList.remove('light', 'dark', 'bg-gray-900', 'bg-slate-100');
     body.classList.add(theme);
-    body.classList.add(theme === 'dark' ? 'bg-gray-900' : 'bg-white');
+    body.classList.add(theme === 'dark' ? 'bg-gray-900' : 'bg-slate-100');
   }, [theme]);
 
   // Load all app data from server on initial load

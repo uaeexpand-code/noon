@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { SummaryRange } from '../types';
 
@@ -105,7 +106,7 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onO
   const views: ViewMode[] = ['month', 'week', 'year'];
 
   return (
-    <header className="relative z-10 flex flex-wrap items-center justify-between gap-4 mb-4 sm:mb-6 p-4 rounded-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-md">
+    <header className="relative z-20 flex flex-wrap items-center justify-between gap-4 mb-4 sm:mb-6 p-4 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg shadow-md border-b border-slate-200 dark:border-gray-700/50">
         <div className="flex items-center space-x-2">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white hidden sm:block">Seller's Calendar</h1>
             <span className="text-xl sm:text-2xl font-bold text-cyan-500 dark:text-cyan-400">UAE</span>
@@ -114,27 +115,27 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onO
         <div className="flex items-center flex-grow justify-center space-x-2 sm:space-x-4">
             <button
                 onClick={() => handleNavigation('today')}
-                className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-cyan-500 hover:text-white transition-colors duration-200"
+                className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 rounded-md hover:bg-cyan-500 hover:text-white dark:hover:text-white transition-colors duration-200 border border-slate-300 dark:border-transparent shadow-sm"
             >
                 Today
             </button>
             <div className="flex items-center">
-                <button onClick={() => handleNavigation('prev')} className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200" aria-label="Previous period">
+                <button onClick={() => handleNavigation('prev')} className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-slate-200 dark:hover:bg-gray-700 transition-colors duration-200" aria-label="Previous period">
                     <ChevronLeftIcon />
                 </button>
                 <h2 className="w-32 sm:w-48 text-center text-sm sm:text-xl font-semibold text-gray-900 dark:text-white">
                     {getTitle(currentDate, viewMode)}
                 </h2>
-                <button onClick={() => handleNavigation('next')} className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200" aria-label="Next period">
+                <button onClick={() => handleNavigation('next')} className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-slate-200 dark:hover:bg-gray-700 transition-colors duration-200" aria-label="Next period">
                     <ChevronRightIcon />
                 </button>
             </div>
         </div>
 
         <div className="flex items-center space-x-2">
-            <div className="hidden sm:flex items-center bg-gray-200 dark:bg-gray-700 rounded-md p-0.5">
+            <div className="hidden sm:flex items-center bg-slate-200 dark:bg-gray-700 rounded-md p-0.5">
                  {views.map(view => (
-                     <button key={view} onClick={() => setViewMode(view)} className={`px-2 py-1 text-sm rounded-md capitalize transition-colors duration-200 ${viewMode === view ? 'bg-cyan-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}>
+                     <button key={view} onClick={() => setViewMode(view)} className={`px-2 py-1 text-sm rounded-md capitalize transition-colors duration-200 ${viewMode === view ? 'bg-cyan-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-slate-300 dark:hover:bg-gray-600'}`}>
                          {view}
                      </button>
                  ))}
@@ -143,23 +144,23 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onO
               <button
                 onClick={() => setIsSummaryMenuOpen(prev => !prev)}
                 disabled={isSendingSummary || !discordWebhookUrl}
-                className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 disabled:cursor-not-allowed disabled:text-gray-400 dark:disabled:text-gray-600"
+                className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-slate-200 dark:hover:bg-gray-700 transition-colors duration-200 disabled:cursor-not-allowed disabled:text-gray-400 dark:disabled:text-gray-600"
                 aria-label="Send summary to Discord"
                 title={!discordWebhookUrl ? "Set Webhook URL in settings to enable" : "Send upcoming event summary to Discord"}
               >
                 {isSendingSummary ? <LoadingSpinner /> : <PaperAirplaneIcon />}
               </button>
               {isSummaryMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-20 border border-gray-200 dark:border-gray-600">
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-20 border border-slate-200 dark:border-gray-600">
                   <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
                     <li>
-                      <a href="#" onClick={(e) => { e.preventDefault(); handleSendSummary('7days'); }} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">Next 7 Days</a>
+                      <a href="#" onClick={(e) => { e.preventDefault(); handleSendSummary('7days'); }} className="block px-4 py-2 hover:bg-slate-100 dark:hover:bg-gray-600">Next 7 Days</a>
                     </li>
                     <li>
-                      <a href="#" onClick={(e) => { e.preventDefault(); handleSendSummary('month'); }} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">Next Month</a>
+                      <a href="#" onClick={(e) => { e.preventDefault(); handleSendSummary('month'); }} className="block px-4 py-2 hover:bg-slate-100 dark:hover:bg-gray-600">Next Month</a>
                     </li>
                     <li>
-                      <a href="#" onClick={(e) => { e.preventDefault(); handleSendSummary('year'); }} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">Rest of Year</a>
+                      <a href="#" onClick={(e) => { e.preventDefault(); handleSendSummary('year'); }} className="block px-4 py-2 hover:bg-slate-100 dark:hover:bg-gray-600">Rest of Year</a>
                     </li>
                   </ul>
                 </div>
@@ -168,21 +169,21 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onO
             <button
               onClick={onDiscoverEvents}
               disabled={isDiscovering}
-              className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 disabled:cursor-not-allowed"
+              className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-slate-200 dark:hover:bg-gray-700 transition-colors duration-200 disabled:cursor-not-allowed"
               aria-label="Discover events with AI"
             >
               {isDiscovering ? <LoadingSpinner /> : <WandIcon />}
             </button>
             <button 
               onClick={onOpenChat} 
-              className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+              className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-slate-200 dark:hover:bg-gray-700 transition-colors duration-200"
               aria-label="Open chat assistant"
             >
               <ChatBubbleIcon />
             </button>
             <button 
               onClick={onOpenSettings} 
-              className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+              className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-slate-200 dark:hover:bg-gray-700 transition-colors duration-200"
               aria-label="Open settings"
             >
               <CogIcon />

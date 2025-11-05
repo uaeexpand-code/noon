@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { type Theme, type AiProvider } from '../types';
 import { testAiConnection } from '../services/aiService';
@@ -101,8 +102,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white" onClick={e => e.stopPropagation()}>
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl border border-slate-200 dark:border-gray-700 text-gray-900 dark:text-white" onClick={e => e.stopPropagation()}>
+        <div className="p-6 border-b border-slate-200 dark:border-gray-700">
           <h3 className="text-lg font-bold">Settings</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">Configure application settings</p>
         </div>
@@ -111,7 +112,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {/* --- AI Configuration --- */}
           <div className="space-y-4">
             <h4 className="text-md font-medium text-gray-800 dark:text-gray-200">AI Configuration</h4>
-            <div className="grid grid-cols-3 gap-2 p-1 bg-gray-200 dark:bg-gray-700 rounded-lg">
+            <div className="grid grid-cols-3 gap-2 p-1 bg-slate-200 dark:bg-gray-700 rounded-lg">
                 {(['gemini', 'openai', 'openrouter'] as AiProvider[]).map(p => (
                     <button type="button" key={p} onClick={() => setAiProvider(p)} className={`px-3 py-2 text-sm font-semibold rounded-md capitalize transition-colors duration-200 ${aiProvider === p ? 'bg-cyan-600 text-white shadow' : 'text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-black/20'}`}>
                         {p}
@@ -119,7 +120,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 ))}
             </div>
             
-            <div className="p-4 bg-gray-100 dark:bg-gray-900/50 rounded-md space-y-3">
+            <div className="p-4 bg-slate-100 dark:bg-gray-900/50 rounded-md space-y-3">
                 {aiProvider === 'gemini' && (
                     <div>
                         <p className="text-sm text-gray-600 dark:text-gray-300">Uses the built-in Google Gemini model. The API key is configured on the server by the host.</p>
@@ -132,7 +133,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div>
                         <label htmlFor="openaiApiKey" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">OpenAI API Key</label>
                         <div className="flex items-center space-x-2">
-                           <input type="password" id="openaiApiKey" value={openaiApiKey} onChange={e => setOpenaiApiKey(e.target.value)} placeholder="sk-..." className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500"/>
+                           <input type="password" id="openaiApiKey" value={openaiApiKey} onChange={e => setOpenaiApiKey(e.target.value)} placeholder="sk-..." className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-slate-300 dark:border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500"/>
                            <button type="button" onClick={() => handleTest('openai')} disabled={!openaiApiKey} className={`px-4 py-2 text-sm font-medium text-white rounded-md transition-colors duration-200 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed ${getTestButtonClass('openai')}`}>
                                {getTestButtonText('openai')}
                            </button>
@@ -143,7 +144,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div>
                         <label htmlFor="openrouterApiKey" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">OpenRouter API Key</label>
                         <div className="flex items-center space-x-2">
-                           <input type="password" id="openrouterApiKey" value={openrouterApiKey} onChange={e => setOpenrouterApiKey(e.target.value)} placeholder="sk-or-..." className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500"/>
+                           <input type="password" id="openrouterApiKey" value={openrouterApiKey} onChange={e => setOpenrouterApiKey(e.target.value)} placeholder="sk-or-..." className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-slate-300 dark:border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500"/>
                            <button type="button" onClick={() => handleTest('openrouter')} disabled={!openrouterApiKey} className={`px-4 py-2 text-sm font-medium text-white rounded-md transition-colors duration-200 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed ${getTestButtonClass('openrouter')}`}>
                               {getTestButtonText('openrouter')}
                            </button>
@@ -156,7 +157,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {/* --- Theme --- */}
           <div>
             <h4 className="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Theme</h4>
-            <label htmlFor="theme-toggle-input" className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-900/50 rounded-md cursor-pointer">
+            <label htmlFor="theme-toggle-input" className="flex items-center justify-between p-3 bg-slate-100 dark:bg-gray-900/50 rounded-md cursor-pointer">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 pr-4">
                   Dark Mode
                 </span>
@@ -171,14 +172,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div>
             <h4 className="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Integrations</h4>
             <label htmlFor="webhookUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Discord Webhook URL</label>
-            <input type="url" id="webhookUrl" value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} placeholder="https://discord.com/api/webhooks/..." className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500" aria-describedby="webhook-description"/>
+            <input type="url" id="webhookUrl" value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} placeholder="https://discord.com/api/webhooks/..." className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-slate-300 dark:border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500" aria-describedby="webhook-description"/>
             <p id="webhook-description" className="mt-2 text-xs text-gray-500 dark:text-gray-400">This allows the app to send reminders and summaries directly to your Discord channel.</p>
           </div>
 
           {/* --- Automated Discovery --- */}
           <div className="space-y-4">
              <h4 className="text-md font-medium text-gray-800 dark:text-gray-200">Automated Event Discovery</h4>
-             <label htmlFor="auto-discover-toggle-input" className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-900/50 rounded-md cursor-pointer">
+             <label htmlFor="auto-discover-toggle-input" className="flex items-center justify-between p-3 bg-slate-100 dark:bg-gray-900/50 rounded-md cursor-pointer">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 pr-4">
                   Enable automatic background search
                 </span>
@@ -190,14 +191,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
              {autoDiscover && (
                 <div>
                   <label htmlFor="frequency" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Run discovery every (days)</label>
-                  <input type="number" id="frequency" value={frequency} onChange={e => setFrequency(parseInt(e.target.value, 10))} min="1" className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500" aria-describedby="frequency-description"/>
+                  <input type="number" id="frequency" value={frequency} onChange={e => setFrequency(parseInt(e.target.value, 10))} min="1" className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-slate-300 dark:border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500" aria-describedby="frequency-description"/>
                   <p id="frequency-description" className="mt-2 text-xs text-gray-500 dark:text-gray-400">The server will automatically check for new events in the background. If any are found, a notification will be sent to your Discord channel.</p>
                 </div>
               )}
           </div>
           
           <div className="pt-4 flex justify-end space-x-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors duration-200">Cancel</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-gray-700 rounded-md transition-colors duration-200">Cancel</button>
             <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-cyan-600 rounded-md hover:bg-cyan-500 transition-colors duration-200">Save Settings</button>
           </div>
         </form>
