@@ -15,11 +15,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // --- File-based Storage ---
-const SETTINGS_FILE = path.join(__dirname, 'settings.json');
-const DISCOVERED_EVENTS_FILE = path.join(__dirname, 'discovered-events.json');
+const DATA_DIR = path.join(__dirname, 'data');
+const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
+const DISCOVERED_EVENTS_FILE = path.join(DATA_DIR, 'discovered-events.json');
+const USER_EVENTS_FILE = path.join(DATA_DIR, 'user-events.json');
+const CHAT_HISTORY_FILE = path.join(DATA_DIR, 'chat-history.json');
+
 
 const writeJSON = async (filePath, data) => {
   try {
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
     await fs.writeFile(filePath, JSON.stringify(data, null, 2));
   } catch (error) {
     console.error(`Error writing to ${filePath}:`, error);
@@ -207,6 +212,27 @@ app.get('/api/discovered-events', async (req, res) => {
     const events = await readJSON(DISCOVERED_EVENTS_FILE, []);
     res.json(events);
 });
+
+app.get('/api/user-events', async (req, res) => {
+    const events = await readJSON(USER_EVENTS_FILE, []);
+    res.json(events);
+});
+
+app.post('/api/user-events', async (req, res) => {
+    await writeJSON(USER_EVENTS_FILE, req.body);
+    res.status(200).json({ message: 'User events saved.' });
+});
+
+app.get('/api/chat-history', async (req, res) => {
+    const history = await readJSON(CHAT_HISTORY_FILE, []);
+    res.json(history);
+});
+
+app.post('/api/chat-history', async (req, res) => {
+    await writeJSON(CHAT_HISTORY_FILE, req.body);
+    res.status(200).json({ message: 'Chat history saved.' });
+});
+
 
 app.post('/api/ai/test', async (req, res) => {
     const { provider, apiKey } = req.body;

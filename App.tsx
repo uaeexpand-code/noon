@@ -97,6 +97,7 @@ const App: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const isInitialMount = useRef(true);
   
   // --- Settings State ---
   const [discordWebhookUrl, setDiscordWebhookUrl] = useState('');
@@ -150,7 +151,7 @@ const App: React.FC = () => {
     body.classList.add(theme === 'dark' ? 'bg-gray-900' : 'bg-white');
   }, [theme]);
 
-  // Load all settings and discovered events from server on initial app load
+  // Load all app data from server on initial load
   useEffect(() => {
     const loadAppData = async () => {
       // Fetch settings
@@ -166,25 +167,58 @@ const App: React.FC = () => {
         setAiProvider(settings.aiProvider || 'gemini');
         setOpenaiApiKey(settings.openaiApiKey || '');
         setOpenrouterApiKey(settings.openrouterApiKey || '');
-
-      } catch (error) {
-        console.error('Failed to load settings from server:', error);
-      }
+      } catch (error) { console.error('Failed to load settings:', error); }
       
-      // Fetch events discovered by server
+      // Fetch server-discovered events
       try {
         const response = await fetch('/api/discovered-events');
         if (!response.ok) throw new Error(`Server responded with ${response.status}`);
         const serverEvents = await response.json();
         const formattedEvents = serverEvents.map((e: any) => ({...e, date: new Date(e.date + 'T00:00:00')}));
         setDiscoveredEvents(formattedEvents);
-      } catch (error) {
-        console.error('Failed to load discovered events from server:', error);
-      }
+      } catch (error) { console.error('Failed to load discovered events:', error); }
+
+      // Fetch user-created events
+      try {
+        const response = await fetch('/api/user-events');
+        if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+        const userEventsData = await response.json();
+        const formattedEvents = userEventsData.map((e: any) => ({...e, date: new Date(e.date)}));
+        setUserEvents(formattedEvents);
+      } catch (error) { console.error('Failed to load user events:', error); }
+
+      // Fetch chat history
+      try {
+        const response = await fetch('/api/chat-history');
+        if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+        setChatMessages(await response.json());
+      } catch (error) { console.error('Failed to load chat history:', error); }
+
+      isInitialMount.current = false;
     };
     loadAppData();
   }, []);
   
+  // Save user events to server when they change
+  useEffect(() => {
+    if (isInitialMount.current) return;
+    fetch('/api/user-events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userEvents)
+    }).catch(error => console.error("Failed to save user events:", error));
+  }, [userEvents]);
+
+  // Save chat history to server when it changes
+  useEffect(() => {
+    if (isInitialMount.current) return;
+    fetch('/api/chat-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(chatMessages)
+    }).catch(error => console.error("Failed to save chat history:", error));
+  }, [chatMessages]);
+
   const handleDateSelect = (date: Date, event?: UserEvent) => {
     setSelectedDate(date);
     if(event) {
