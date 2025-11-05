@@ -37,19 +37,19 @@ const IdeaGenerator: React.FC<{ event: UserEvent | SpecialDate | { name: string;
     }, [event]);
 
     return (
-        <div className="mt-4 p-4 bg-gray-700/50 rounded-lg">
-            <h4 className="font-semibold text-gray-200 flex items-center">
-                <SparklesIcon className="h-5 w-5 mr-2 text-cyan-400"/>
+        <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-700/50 rounded-lg">
+            <h4 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center">
+                <SparklesIcon className="h-5 w-5 mr-2 text-cyan-500 dark:text-cyan-400"/>
                 Brilliant Idea Generator
             </h4>
-            <p className="text-xs text-gray-400 mb-3">Get AI-powered marketing ideas for this event.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Get AI-powered marketing ideas for this event.</p>
             <button onClick={handleGenerateIdeas} disabled={isLoading} className="w-full px-4 py-2 text-sm font-medium text-white bg-cyan-600 rounded-md hover:bg-cyan-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors duration-200">
                 {isLoading ? 'Generating...' : 'Generate Ideas'}
             </button>
             {ideas.length > 0 && (
-                <ul className="mt-4 space-y-2 text-sm text-gray-300">
+                <ul className="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-300">
                     {ideas.map((idea, index) => (
-                        <li key={index} className="p-3 bg-gray-800 rounded-md list-disc list-inside ml-2">{idea}</li>
+                        <li key={index} className="p-3 bg-white dark:bg-gray-800 rounded-md list-disc list-inside ml-2">{idea}</li>
                     ))}
                 </ul>
             )}
@@ -120,15 +120,15 @@ const DiscordReminder: React.FC<{
     };
     
     return (
-        <div className="p-4 bg-gray-700/50 rounded-lg">
-            <label className="block text-sm font-medium text-gray-300 mb-2">Discord Reminder</label>
+        <div className="p-4 bg-gray-100 dark:bg-gray-700/50 rounded-lg">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Discord Reminder</label>
             {!webhookUrl ? (
-                <div className="text-xs text-center text-gray-400 p-3 bg-gray-900/50 rounded-md">
-                    To send reminders directly, please set your <strong className="text-cyan-400">Discord Webhook URL</strong> in the settings.
+                <div className="text-xs text-center text-gray-500 dark:text-gray-400 p-3 bg-gray-200 dark:bg-gray-900/50 rounded-md">
+                    To send reminders directly, please set your <strong className="text-cyan-500 dark:text-cyan-400">Discord Webhook URL</strong> in the settings.
                 </div>
             ) : (
                  <div className="flex items-center space-x-2">
-                    <input type="time" value={reminderTime} onChange={e => setReminderTime(e.target.value)} className="px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500 w-28"/>
+                    <input type="time" value={reminderTime} onChange={e => setReminderTime(e.target.value)} className="px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500 w-28 text-gray-900 dark:text-white"/>
                     <button
                         type="button"
                         onClick={handleSendToDiscord}
@@ -144,10 +144,10 @@ const DiscordReminder: React.FC<{
                     </button>
                  </div>
             )}
-             <div className="mt-3 text-xs text-gray-400">Or, copy the command for a reminder bot:</div>
+             <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">Or, copy the command for a reminder bot:</div>
              <div className="flex items-center space-x-2 mt-1">
-                <input type="text" readOnly value={discordReminderCommand} className="flex-grow px-3 py-2 text-xs bg-gray-900/50 text-gray-400 border border-gray-600 rounded-md" />
-                <button type="button" onClick={handleCopy} className="p-2 bg-gray-600 hover:bg-cyan-600 rounded-md transition-colors duration-200">
+                <input type="text" readOnly value={discordReminderCommand} className="flex-grow px-3 py-2 text-xs bg-gray-200 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-md" />
+                <button type="button" onClick={handleCopy} className="p-2 bg-gray-300 dark:bg-gray-600 hover:bg-cyan-600 rounded-md transition-colors duration-200">
                     {copied ? <span className="text-xs">Copied!</span> : <CopyIcon className="h-4 w-4"/>}
                 </button>
             </div>
@@ -187,22 +187,22 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, date, e
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md border border-gray-700" onClick={e => e.stopPropagation()}>
-        <div className="p-6 border-b border-gray-700">
-          <h3 className="text-lg font-bold text-white">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
             {event ? 'Edit Event' : 'Add Event'}
           </h3>
-          <p className="text-sm text-cyan-400">{date.toDateString()}</p>
+          <p className="text-sm text-cyan-500 dark:text-cyan-400">{date.toDateString()}</p>
         </div>
         
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-1">Title</label>
-            <input type="text" id="title" value={title} onChange={e => setTitle(e.target.value)} required className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500"/>
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+            <input type="text" id="title" value={title} onChange={e => setTitle(e.target.value)} required className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500 text-gray-900 dark:text-white"/>
           </div>
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">Description</label>
-            <textarea id="description" value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500"></textarea>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <textarea id="description" value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500 text-gray-900 dark:text-white"></textarea>
           </div>
           
           <DiscordReminder
@@ -219,13 +219,13 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, date, e
           <div className="pt-4 flex justify-between items-center">
             <div>
               {event && (
-                <button type="button" onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/20 rounded-md transition-colors duration-200">
+                <button type="button" onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/20 rounded-md transition-colors duration-200">
                   Delete
                 </button>
               )}
             </div>
             <div className="flex space-x-2">
-              <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 rounded-md transition-colors duration-200">
+              <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors duration-200">
                 Cancel
               </button>
               <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-cyan-600 rounded-md hover:bg-cyan-500 transition-colors duration-200">

@@ -49,8 +49,8 @@ const DayCell: React.FC<{
     onDateSelect(date, event);
   };
 
-  const cellClasses = `relative flex flex-col p-2 border border-gray-700/50 transition-colors duration-200 group overflow-hidden ${isCurrentMonth ? 'bg-gray-800 hover:bg-gray-700/70 cursor-pointer' : 'bg-gray-900/50 text-gray-500'} ${isTall ? 'min-h-[120px]' : 'aspect-square'}`;
-  const dayNumberClasses = `text-xs sm:text-sm font-semibold flex items-center justify-center h-6 w-6 rounded-full transition-colors duration-200 ${isToday ? 'bg-cyan-500 text-white' : 'text-gray-300 group-hover:text-white'}`;
+  const cellClasses = `relative flex flex-col p-2 border border-gray-200 dark:border-gray-700/50 transition-colors duration-200 group overflow-hidden ${isCurrentMonth ? 'bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700/70 cursor-pointer' : 'bg-gray-50 dark:bg-gray-900/50 text-gray-400 dark:text-gray-500'} ${isTall ? 'min-h-[120px]' : 'aspect-square'}`;
+  const dayNumberClasses = `text-xs sm:text-sm font-semibold flex items-center justify-center h-6 w-6 rounded-full transition-colors duration-200 ${isToday ? 'bg-cyan-500 text-white' : 'text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white'}`;
   
   return (
     <div className={cellClasses} onClick={handleCellClick}>
@@ -82,7 +82,7 @@ const MonthView: React.FC<Omit<CalendarProps, 'viewMode' | 'setViewMode' | 'setC
     const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     const calendarDays = [];
-    for (let i = 0; i < firstDayOfMonth; i++) calendarDays.push(<div key={`empty-start-${i}`} className="aspect-square bg-gray-900/50 border border-gray-700/50" />);
+    for (let i = 0; i < firstDayOfMonth; i++) calendarDays.push(<div key={`empty-start-${i}`} className="aspect-square bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700/50" />);
 
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
@@ -92,11 +92,11 @@ const MonthView: React.FC<Omit<CalendarProps, 'viewMode' | 'setViewMode' | 'setC
   
     const totalCells = firstDayOfMonth + daysInMonth;
     const remainingCells = (7 - (totalCells % 7)) % 7;
-    for (let i = 0; i < remainingCells; i++) calendarDays.push(<div key={`empty-end-${i}`} className="aspect-square bg-gray-900/50 border border-gray-700/50" />);
+    for (let i = 0; i < remainingCells; i++) calendarDays.push(<div key={`empty-end-${i}`} className="aspect-square bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700/50" />);
 
     return (
         <>
-            <div className="grid grid-cols-7 gap-1 text-center font-semibold text-cyan-400 mb-2">
+            <div className="grid grid-cols-7 gap-1 text-center font-semibold text-cyan-600 dark:text-cyan-400 mb-2">
                 {daysOfWeek.map(day => <div key={day} className="text-xs sm:text-base">{day}</div>)}
             </div>
             <div className="grid grid-cols-7 gap-1">{calendarDays}</div>
@@ -119,8 +119,8 @@ const WeekView: React.FC<Omit<CalendarProps, 'viewMode' | 'setViewMode' | 'setCu
 
     return (
         <>
-            <div className="grid grid-cols-7 gap-1 text-center font-semibold text-cyan-400 mb-2">
-                {daysOfWeek.map((day, i) => <div key={day} className="text-xs sm:text-base">{day} <span className="text-gray-400">{weekDays[i].getDate()}</span></div>)}
+            <div className="grid grid-cols-7 gap-1 text-center font-semibold text-cyan-600 dark:text-cyan-400 mb-2">
+                {daysOfWeek.map((day, i) => <div key={day} className="text-xs sm:text-base">{day} <span className="text-gray-500 dark:text-gray-400">{weekDays[i].getDate()}</span></div>)}
             </div>
             <div className="grid grid-cols-7 gap-1">
                 {weekDays.map(date => {
@@ -156,9 +156,9 @@ const YearView: React.FC<Omit<CalendarProps, 'viewMode' | 'onDateSelect'>> = ({ 
                 const monthEvents = events.filter(e => e.date.getFullYear() === year && e.date.getMonth() === month);
 
                 return (
-                    <div key={month} className="p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700/70" onClick={() => handleMonthClick(monthDate)}>
-                        <h4 className={`font-bold text-center mb-2 ${today.getFullYear() === year && today.getMonth() === month ? 'text-cyan-400' : 'text-white'}`}>{monthName}</h4>
-                        <div className="grid grid-cols-7 gap-1 text-xs text-center text-gray-500">
+                    <div key={month} className="p-3 bg-white dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70" onClick={() => handleMonthClick(monthDate)}>
+                        <h4 className={`font-bold text-center mb-2 ${today.getFullYear() === year && today.getMonth() === month ? 'text-cyan-500 dark:text-cyan-400' : 'text-gray-900 dark:text-white'}`}>{monthName}</h4>
+                        <div className="grid grid-cols-7 gap-1 text-xs text-center text-gray-400 dark:text-gray-500">
                             {['S','M','T','W','T','F','S'].map(d=><div key={d}>{d}</div>)}
                         </div>
                         <div className="grid grid-cols-7 gap-1 mt-1">
@@ -195,7 +195,7 @@ export const Calendar: React.FC<CalendarProps> = (props) => {
   };
 
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-xl p-4">
+    <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-xl p-4">
       {renderView()}
     </div>
   );

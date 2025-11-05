@@ -18,3 +18,5 @@ export interface ChatMessage {
   role: 'user' | 'model';
   content: string;
 }
+
+export type Theme = 'light' | 'dark';
