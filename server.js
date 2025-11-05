@@ -148,6 +148,21 @@ const runDiscoveryTask = async () => {
         console.log('Not time to run discovery yet.');
         return;
     }
+    
+    // --- Pre-flight configuration check to prevent crashes ---
+    if (aiProvider === 'gemini' && !ai) {
+        console.warn('Automated discovery skipped: Gemini API key not configured on server.');
+        return;
+    }
+    if (aiProvider === 'openai' && !openaiApiKey) {
+        console.warn('Automated discovery skipped: OpenAI API key not configured in settings.');
+        return;
+    }
+    if (aiProvider === 'openrouter' && !openrouterApiKey) {
+        console.warn('Automated discovery skipped: OpenRouter API key not configured in settings.');
+        return;
+    }
+
 
     console.log(`Discovering new events using ${aiProvider}...`);
     const today = new Date();
@@ -159,15 +174,11 @@ const runDiscoveryTask = async () => {
         let newEventsRaw = []; // Initialize as an empty array to prevent crashes
         
         if (aiProvider === 'openai') {
-            if (!openaiApiKey) throw new Error("OpenAI API key not set for discovery task.");
             newEventsRaw = await handleOpenAiRequest(openaiApiKey, [{ role: 'user', content: prompt }], true);
         } else if (aiProvider === 'openrouter') {
-            if (!openrouterApiKey) throw new Error("OpenRouter API key not set for discovery task.");
             newEventsRaw = await handleOpenRouterRequest(openrouterApiKey, [{ role: 'user', content: prompt }], true);
-        } else if (aiProvider === 'gemini') {
+        } else { // Default to gemini
             newEventsRaw = await handleGeminiRequest(prompt, true);
-        } else {
-            console.log(`Automated discovery skipped: No valid AI provider configured (found: "${aiProvider}").`);
         }
 
         const discoveredEvents = await readJSON(DISCOVERED_EVENTS_FILE, []);
@@ -343,5 +354,9 @@ app.listen(port, () => {
   cron.schedule('0 3 * * *', runDiscoveryTask);
   console.log('Scheduled automated event discovery to run daily at 3:00 AM.');
   // Run once on startup after a short delay to allow the server to initialize
-  setTimeout(runDiscoveryTask, 5000); 
+  setTimeout(() => {
+    runDiscoveryTask().catch(err => {
+        console.error("Fatal error during initial discovery task:", err);
+    });
+  }, 5000); 
 });
