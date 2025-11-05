@@ -1,5 +1,6 @@
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { SummaryRange } from '../types';
 
 type ViewMode = 'month' | 'week' | 'year';
 
@@ -11,7 +12,7 @@ interface HeaderProps {
   isDiscovering: boolean;
   viewMode: ViewMode;
   setViewMode: (view: ViewMode) => void;
-  onSendSummary: () => void;
+  onSendSummary: (range: SummaryRange) => void;
   isSendingSummary: boolean;
   discordWebhookUrl: string;
   onOpenChat: () => void;
@@ -60,6 +61,8 @@ const ChatBubbleIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className=
 
 // --- Main Header Component ---
 export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onOpenSettings, onDiscoverEvents, isDiscovering, viewMode, setViewMode, onSendSummary, isSendingSummary, discordWebhookUrl, onOpenChat }) => {
+  const [isSummaryMenuOpen, setIsSummaryMenuOpen] = useState(false);
+  const summaryMenuRef = useRef<HTMLDivElement>(null);
 
   const handleNavigation = (direction: 'prev' | 'next' | 'today') => {
     if (direction === 'today') {
@@ -84,6 +87,21 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onO
     }
     setCurrentDate(newDate);
   };
+  
+  const handleSendSummary = (range: SummaryRange) => {
+    onSendSummary(range);
+    setIsSummaryMenuOpen(false);
+  };
+  
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (summaryMenuRef.current && !summaryMenuRef.current.contains(event.target as Node)) {
+        setIsSummaryMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const views: ViewMode[] = ['month', 'week', 'year'];
 
@@ -122,21 +140,32 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onO
                      </button>
                  ))}
             </div>
-             <button
-              onClick={onSendSummary}
-              disabled={isSendingSummary || !discordWebhookUrl || viewMode === 'year'}
-              className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 disabled:cursor-not-allowed disabled:text-gray-400 dark:disabled:text-gray-600"
-              aria-label="Send summary to Discord"
-              title={
-                !discordWebhookUrl 
-                ? "Set Webhook URL in settings to enable" 
-                : viewMode === 'year' 
-                ? "Summary available in Week/Month view only" 
-                : "Send upcoming event summary to Discord"
-              }
-            >
-              {isSendingSummary ? <LoadingSpinner /> : <PaperAirplaneIcon />}
-            </button>
+            <div className="relative" ref={summaryMenuRef}>
+              <button
+                onClick={() => setIsSummaryMenuOpen(prev => !prev)}
+                disabled={isSendingSummary || !discordWebhookUrl}
+                className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 disabled:cursor-not-allowed disabled:text-gray-400 dark:disabled:text-gray-600"
+                aria-label="Send summary to Discord"
+                title={!discordWebhookUrl ? "Set Webhook URL in settings to enable" : "Send upcoming event summary to Discord"}
+              >
+                {isSendingSummary ? <LoadingSpinner /> : <PaperAirplaneIcon />}
+              </button>
+              {isSummaryMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-20 border border-gray-200 dark:border-gray-600">
+                  <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
+                    <li>
+                      <a href="#" onClick={(e) => { e.preventDefault(); handleSendSummary('7days'); }} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">Next 7 Days</a>
+                    </li>
+                    <li>
+                      <a href="#" onClick={(e) => { e.preventDefault(); handleSendSummary('month'); }} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">Next Month</a>
+                    </li>
+                    <li>
+                      <a href="#" onClick={(e) => { e.preventDefault(); handleSendSummary('year'); }} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">Rest of Year</a>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
             <button
               onClick={onDiscoverEvents}
               disabled={isDiscovering}

@@ -20,3 +20,5 @@ export interface ChatMessage {
 }
 
 export type Theme = 'light' | 'dark';
+
+export type SummaryRange = '7days' | 'month' | 'year';

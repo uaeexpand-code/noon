@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { type Theme } from '../types';
 
@@ -106,7 +105,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     aria-describedby="frequency-description"
                   />
                   <p id="frequency-description" className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    The app will check for new events when you open it, if the last check was more than this many days ago.
+                    The server will automatically check for new events in the background. If any are found, a notification will be sent to your Discord channel.
                   </p>
                 </div>
               )}

@@ -1,10 +1,9 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Calendar } from './components/Calendar';
 import { EventModal } from './components/EventModal';
 import { Header } from './components/Header';
 import { SettingsModal } from './components/SettingsModal';
-import { type UserEvent, type SpecialDate, type CalendarEvent, type ChatMessage, type Theme } from './types';
+import { type UserEvent, type SpecialDate, type CalendarEvent, type ChatMessage, type Theme, type SummaryRange } from './types';
 import { getSpecialDates } from './services/uaeDatesService';
 import { discoverEventsForMonth, getChatResponse } from './services/geminiService';
 import { sendDiscordWebhook } from './services/discordService';
@@ -92,18 +91,18 @@ const App: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [editingEvent, setEditingEvent] = useState<UserEvent | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [discordWebhookUrl, setDiscordWebhookUrl] = useState('');
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [isSendingSummary, setIsSendingSummary] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   
-  // Settings for automated discovery
+  // Settings state, now loaded from server
+  const [discordWebhookUrl, setDiscordWebhookUrl] = useState('');
   const [isAutoDiscoverEnabled, setIsAutoDiscoverEnabled] = useState(false);
   const [autoDiscoverFrequency, setAutoDiscoverFrequency] = useState(2);
   const [theme, setTheme] = useState<Theme>('dark');
-
+  const [lastAutoDiscoverRun, setLastAutoDiscoverRun] = useState(0);
 
   const specialDates = useMemo(
     () => getSpecialDates(currentDate.getFullYear()),
@@ -119,7 +118,7 @@ const App: React.FC = () => {
     return combined.sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [specialDates, userEvents, discoveredEvents]);
 
-  const handleDiscoverEvents = async (): Promise<boolean> => {
+  const handleDiscoverEvents = async () => {
     setIsDiscovering(true);
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -130,17 +129,16 @@ const App: React.FC = () => {
       const existingEventKeys = new Set(allEvents.map(e => `${(e.type === 'user' ? e.title : e.name)}_${e.date.toDateString()}`));
       const uniqueNewEvents = newEvents.filter(newEvent => !existingEventKeys.has(`${newEvent.name}_${newEvent.date.toDateString()}`));
 
+      // We add to client-side discovered events for immediate UI update.
+      // The server will handle persistent storage.
       setDiscoveredEvents(prev => [...prev, ...uniqueNewEvents]);
-      return true;
     } catch (error) {
       console.error("Failed to discover events:", error);
-      return false;
     } finally {
       setIsDiscovering(false);
     }
   };
   
-  // Effect for applying the theme class to the body
   useEffect(() => {
     const body = document.body;
     body.classList.remove('light', 'dark', 'bg-gray-900', 'bg-white');
@@ -148,35 +146,36 @@ const App: React.FC = () => {
     body.classList.add(theme === 'dark' ? 'bg-gray-900' : 'bg-white');
   }, [theme]);
 
+  // Load all settings and discovered events from server on initial app load
   useEffect(() => {
-    // Load all settings from localStorage on initial app load
-    const savedWebhookUrl = localStorage.getItem('discordWebhookUrl') || '';
-    const savedAutoDiscoverEnabled = localStorage.getItem('isAutoDiscoverEnabled') === 'true';
-    const savedAutoDiscoverFrequency = parseInt(localStorage.getItem('autoDiscoverFrequency') || '2', 10);
-    const savedTheme = (localStorage.getItem('theme') as Theme) || 'dark';
-    
-    setDiscordWebhookUrl(savedWebhookUrl);
-    setIsAutoDiscoverEnabled(savedAutoDiscoverEnabled);
-    setAutoDiscoverFrequency(savedAutoDiscoverFrequency);
-    setTheme(savedTheme);
-
-    // Check if it's time to run automated discovery
-    if (savedAutoDiscoverEnabled) {
-      const lastRun = parseInt(localStorage.getItem('lastAutoDiscoverRun') || '0', 10);
-      const now = new Date().getTime();
-      const frequencyInMs = savedAutoDiscoverFrequency * 24 * 60 * 60 * 1000;
-
-      if (now - lastRun > frequencyInMs) {
-        console.log("Automated discovery interval has passed. Running now...");
-        handleDiscoverEvents().then(success => {
-          if (success) {
-            localStorage.setItem('lastAutoDiscoverRun', new Date().getTime().toString());
-            console.log("Automated discovery successful. Timestamp updated.");
-          }
-        });
+    const loadAppData = async () => {
+      // Fetch settings
+      try {
+        const response = await fetch('/api/settings');
+        if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+        const settings = await response.json();
+        setDiscordWebhookUrl(settings.webhookUrl || '');
+        setIsAutoDiscoverEnabled(settings.isAutoDiscoverEnabled || false);
+        setAutoDiscoverFrequency(settings.autoDiscoverFrequency || 2);
+        setTheme(settings.theme || 'dark');
+        setLastAutoDiscoverRun(settings.lastAutoDiscoverRun || 0);
+      } catch (error) {
+        console.error('Failed to load settings from server:', error);
       }
-    }
-  }, []); // Empty dependency array ensures this runs only once on mount
+      
+      // Fetch events discovered by server
+      try {
+        const response = await fetch('/api/discovered-events');
+        if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+        const serverEvents = await response.json();
+        const formattedEvents = serverEvents.map((e: any) => ({...e, date: new Date(e.date + 'T00:00:00')}));
+        setDiscoveredEvents(formattedEvents);
+      } catch (error) {
+        console.error('Failed to load discovered events from server:', error);
+      }
+    };
+    loadAppData();
+  }, []);
   
   const handleDateSelect = (date: Date, event?: UserEvent) => {
     setSelectedDate(date);
@@ -206,61 +205,60 @@ const App: React.FC = () => {
     closeModal();
   };
 
-  const handleSaveSettings = (settings: { webhookUrl: string; isAutoDiscoverEnabled: boolean; autoDiscoverFrequency: number; theme: Theme; }) => {
-    // Update state
+  const handleSaveSettings = async (settings: { webhookUrl: string; isAutoDiscoverEnabled: boolean; autoDiscoverFrequency: number; theme: Theme; }) => {
+    // Update state immediately for responsive UI
     setDiscordWebhookUrl(settings.webhookUrl);
     setIsAutoDiscoverEnabled(settings.isAutoDiscoverEnabled);
     setAutoDiscoverFrequency(settings.autoDiscoverFrequency);
     setTheme(settings.theme);
     
-    // Save to localStorage
-    localStorage.setItem('discordWebhookUrl', settings.webhookUrl);
-    localStorage.setItem('isAutoDiscoverEnabled', String(settings.isAutoDiscoverEnabled));
-    localStorage.setItem('autoDiscoverFrequency', String(settings.autoDiscoverFrequency));
-    localStorage.setItem('theme', settings.theme);
+    // Save to server
+    try {
+        await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({...settings, lastAutoDiscoverRun})
+        });
+    } catch (error) {
+        console.error("Failed to save settings to server:", error);
+        alert("Could not save settings. Please check the server connection.");
+    }
     
     setIsSettingsOpen(false);
   };
 
-  const handleSendSummary = async () => {
+  const handleSendSummary = async (range: SummaryRange) => {
     if (!discordWebhookUrl) {
       alert("Please set your Discord Webhook URL in settings first.");
       return;
     }
-     if (viewMode === 'year') {
-        alert("Summary can only be sent for Week or Month view.");
-        return;
-    }
-
+    
     setIsSendingSummary(true);
 
     let summaryEvents: CalendarEvent[] = [];
     let title = '';
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    let endDate = new Date(today);
 
-    if (viewMode === 'week') {
-      const startOfWeek = new Date(currentDate);
-      startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
-      startOfWeek.setHours(0,0,0,0);
-      const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 6);
-      endOfWeek.setHours(23,59,59,999);
-      
-      title = `🗓️ Weekly Summary: ${startOfWeek.toLocaleDateString('en-CA')} - ${endOfWeek.toLocaleDateString('en-CA')}`;
-      summaryEvents = allEvents.filter(e => e.date >= startOfWeek && e.date <= endOfWeek);
-    } else { // 'month'
-      title = `🗓️ Monthly Summary for ${currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}`;
-      summaryEvents = allEvents.filter(e => e.date.getMonth() === currentDate.getMonth() && e.date.getFullYear() === currentDate.getFullYear());
+    if (range === '7days') {
+        endDate.setDate(today.getDate() + 7);
+        title = `🗓️ Upcoming Events: Next 7 Days`;
+    } else if (range === 'month') {
+        endDate.setMonth(today.getMonth() + 1);
+        title = `🗓️ Upcoming Events: Next Month`;
+    } else { // 'year'
+        endDate = new Date(today.getFullYear(), 11, 31);
+        title = `🗓️ Upcoming Events: Rest of ${today.getFullYear()}`;
     }
-
-    const upcomingEvents = summaryEvents
-      .filter(e => e.date >= today)
+    
+    summaryEvents = allEvents
+      .filter(e => e.date >= today && e.date <= endDate)
       .sort((a, b) => a.date.getTime() - b.date.getTime());
 
     let payload;
 
-    if (upcomingEvents.length === 0) {
+    if (summaryEvents.length === 0) {
       payload = {
         embeds: [{
           title,
@@ -270,8 +268,8 @@ const App: React.FC = () => {
         }]
       };
     } else {
-      const description = upcomingEvents
-        .slice(0, 25) // Discord embed description has a char limit, 25 fields are also a limit. Cap events for safety.
+      const description = summaryEvents
+        .slice(0, 25)
         .map(event => {
           const eventName = event.type === 'user' ? event.title : event.name;
           const dateString = event.date.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' });
