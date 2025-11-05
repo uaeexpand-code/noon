@@ -13,3 +13,8 @@ export interface UserEvent {
 }
 
 export type CalendarEvent = (UserEvent & { type: 'user' }) | (SpecialDate & { type: 'special' | 'discovered' });
+
+export interface ChatMessage {
+  role: 'user' | 'model';
+  content: string;
+}

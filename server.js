@@ -66,6 +66,32 @@ app.post('/api/gemini/:action', async (req, res) => {
         },
       });
       result = JSON.parse(response.text.trim());
+    } else if (action === 'chat') {
+        const { message, history, events } = payload;
+        
+        const eventSummaries = events.map(e => ` - ${e.date.substring(0, 10)}: ${e.type === 'user' ? e.title : e.name} (${e.type})`).join('\n');
+    
+        const historyText = history.map(h => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`).join('\n\n');
+    
+        const prompt = `You are a helpful and clever calendar assistant for an e-commerce seller in the UAE. Your tone should be encouraging and proactive.
+Use the provided calendar events to answer the user's questions.
+
+Here are the events for the current period:
+${eventSummaries}
+
+Here is the conversation history so far:
+${historyText}
+
+User's new message:
+${message}
+
+Provide a helpful and concise response. Do not repeat the events list unless asked. Address the user directly.`;
+    
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+        });
+        result = response.text;
     } else {
       return res.status(404).json({ error: "Unknown API action." });
     }

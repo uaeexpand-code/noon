@@ -1,13 +1,87 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Calendar } from './components/Calendar';
 import { EventModal } from './components/EventModal';
 import { Header } from './components/Header';
 import { SettingsModal } from './components/SettingsModal';
-import { type UserEvent, type SpecialDate, type CalendarEvent } from './types';
+import { type UserEvent, type SpecialDate, type CalendarEvent, type ChatMessage } from './types';
 import { getSpecialDates } from './services/uaeDatesService';
-import { discoverEventsForMonth } from './services/geminiService';
+import { discoverEventsForMonth, getChatResponse } from './services/geminiService';
 import { sendDiscordWebhook } from './services/discordService';
+
+// --- Chat Modal Component ---
+const ChatModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  messages: ChatMessage[];
+  onSendMessage: (message: string) => void;
+  isLoading: boolean;
+}> = ({ isOpen, onClose, messages, onSendMessage, isLoading }) => {
+  const [input, setInput] = useState('');
+  const messagesEndRef = useRef<null | HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(scrollToBottom, [messages, isLoading]);
+
+  const handleSend = () => {
+    if (input.trim()) {
+      onSendMessage(input.trim());
+      setInput('');
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg h-[80vh] flex flex-col border border-gray-700" onClick={e => e.stopPropagation()}>
+        <div className="p-4 border-b border-gray-700">
+          <h3 className="text-lg font-bold text-white text-center">Chat with your Calendar</h3>
+        </div>
+        <div className="flex-grow p-4 overflow-y-auto space-y-4">
+          {messages.map((msg, index) => (
+            <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.role === 'user' ? 'bg-cyan-600' : 'bg-gray-700'}`}>
+                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="max-w-xs md:max-w-md p-3 rounded-lg bg-gray-700">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:0.2s]"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:0.4s]"></div>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+        <div className="p-4 border-t border-gray-700">
+          <div className="flex items-center space-x-2">
+            <input
+              type="text"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyPress={e => e.key === 'Enter' && !isLoading && handleSend()}
+              placeholder="Ask about your events..."
+              className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-cyan-500 focus:border-cyan-500"
+              disabled={isLoading}
+            />
+            <button onClick={handleSend} disabled={isLoading || !input.trim()} className="px-4 py-2 text-sm font-medium text-white bg-cyan-600 rounded-md hover:bg-cyan-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors">
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 
 const App: React.FC = () => {
@@ -21,6 +95,9 @@ const App: React.FC = () => {
   const [discordWebhookUrl, setDiscordWebhookUrl] = useState('');
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [isSendingSummary, setIsSendingSummary] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
 
 
   useEffect(() => {
@@ -175,6 +252,44 @@ const App: React.FC = () => {
       setIsSendingSummary(false);
     }
   };
+
+  const handleSendMessage = async (message: string) => {
+    const newMessages: ChatMessage[] = [...chatMessages, { role: 'user', content: message }];
+    setChatMessages(newMessages);
+    setIsChatLoading(true);
+
+    let contextEvents: CalendarEvent[] = [];
+    if (viewMode === 'week') {
+      const startOfWeek = new Date(currentDate);
+      startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+      startOfWeek.setHours(0,0,0,0);
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23,59,59,999);
+      contextEvents = allEvents.filter(e => e.date >= startOfWeek && e.date <= endOfWeek);
+    } else if (viewMode === 'month') { 
+      contextEvents = allEvents.filter(e => e.date.getMonth() === currentDate.getMonth() && e.date.getFullYear() === currentDate.getFullYear());
+    } else { // year
+      contextEvents = allEvents.filter(e => e.date.getFullYear() === currentDate.getFullYear());
+    }
+
+    try {
+      const response = await getChatResponse(message, newMessages, contextEvents);
+      setChatMessages(prev => [...prev, { role: 'model', content: response }]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setChatMessages(prev => [...prev, { role: 'model', content: "Sorry, something went wrong." }]);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
+
+  const openChat = () => {
+    if (chatMessages.length === 0) {
+      setChatMessages([{ role: 'model', content: "Hello! I'm your calendar assistant. Ask me anything about your upcoming events, or for marketing ideas!" }]);
+    }
+    setIsChatOpen(true);
+  };
   
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 p-4 sm:p-6 lg:p-8 font-sans">
@@ -190,6 +305,7 @@ const App: React.FC = () => {
           onSendSummary={handleSendSummary}
           isSendingSummary={isSendingSummary}
           discordWebhookUrl={discordWebhookUrl}
+          onOpenChat={openChat}
         />
         <main>
           <Calendar 
@@ -221,6 +337,13 @@ const App: React.FC = () => {
           currentWebhookUrl={discordWebhookUrl}
         />
       )}
+      <ChatModal
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        messages={chatMessages}
+        onSendMessage={handleSendMessage}
+        isLoading={isChatLoading}
+      />
     </div>
   );
 };

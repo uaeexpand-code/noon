@@ -1,6 +1,6 @@
 
 import { Type } from "@google/genai";
-import { type SpecialDate } from '../types';
+import { type SpecialDate, type CalendarEvent, type ChatMessage } from '../types';
 
 // Helper function to handle API calls to our own server proxy
 async function fetchFromProxy(action: string, body: object) {
@@ -86,4 +86,27 @@ export const discoverEventsForMonth = async (year: number, month: number): Promi
     } catch (error) {
         return [];
     }
+};
+
+export const getChatResponse = async (
+  message: string, 
+  history: ChatMessage[], 
+  events: CalendarEvent[]
+): Promise<string> => {
+  try {
+    const responseText = await fetchFromProxy('chat', {
+      message,
+      history,
+      events,
+    });
+    
+    if (typeof responseText === 'string') {
+        return responseText;
+    } else {
+        console.error("Invalid format received from server for chat:", responseText);
+        throw new Error("Invalid format received from server.");
+    }
+  } catch (error) {
+    return "Sorry, I encountered an error. Please try again.";
+  }
 };

@@ -14,6 +14,7 @@ interface HeaderProps {
   onSendSummary: () => void;
   isSendingSummary: boolean;
   discordWebhookUrl: string;
+  onOpenChat: () => void;
 }
 
 // --- Helper Functions for Date Formatting ---
@@ -54,10 +55,11 @@ const CogIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-
 const WandIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 4V2m0 18v-2m5-13h2M2 9h2m13 13l-1.4-1.4M4.4 19.6L3 18.2m16.2.4l-1.4-1.4M3 5.8l1.4 1.4M9 22v-2m0-18V2m13 5h2M2 9h2m-1.6 9.6l1.4-1.4M18.2 3l1.4 1.4m-16.8.4l1.4-1.4M9 2v2m0 18v-2m5-13h-2M4 9H2m13 .5l-1-1M7.5 21.5l-1-1m12-12l-1-1M4.5 7.5l-1-1" /><path d="M12 5.5A6.5 6.5 0 0 0 5.5 12a6.5 6.5 0 0 0 6.5 6.5A6.5 6.5 0 0 0 18.5 12 6.5 6.5 0 0 0 12 5.5z" /></svg>);
 const LoadingSpinner = () => (<svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>);
 const PaperAirplaneIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>);
+const ChatBubbleIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>);
 
 
 // --- Main Header Component ---
-export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onOpenSettings, onDiscoverEvents, isDiscovering, viewMode, setViewMode, onSendSummary, isSendingSummary, discordWebhookUrl }) => {
+export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onOpenSettings, onDiscoverEvents, isDiscovering, viewMode, setViewMode, onSendSummary, isSendingSummary, discordWebhookUrl, onOpenChat }) => {
 
   const handleNavigation = (direction: 'prev' | 'next' | 'today') => {
     if (direction === 'today') {
@@ -142,6 +144,13 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onO
               aria-label="Discover events with AI"
             >
               {isDiscovering ? <LoadingSpinner /> : <WandIcon />}
+            </button>
+            <button 
+              onClick={onOpenChat} 
+              className="p-2 text-gray-400 hover:text-white rounded-full hover:bg-gray-700 transition-colors duration-200"
+              aria-label="Open chat assistant"
+            >
+              <ChatBubbleIcon />
             </button>
             <button 
               onClick={onOpenSettings} 
