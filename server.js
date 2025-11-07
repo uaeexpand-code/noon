@@ -1,6 +1,6 @@
 
 import express from 'express';
-import { GoogleGenAI, Type } from '@google/ai';
+import { GoogleGenAI } from '@google/genai';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';

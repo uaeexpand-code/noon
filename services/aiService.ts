@@ -1,5 +1,4 @@
 
-import { Type } from "@google/genai";
 import { type SpecialDate, type CalendarEvent, type ChatMessage, type AiProvider } from '../types';
 
 // Helper function to handle API calls to our own server proxy
