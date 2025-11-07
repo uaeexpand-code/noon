@@ -7,7 +7,6 @@ import { SettingsModal } from './components/SettingsModal';
 import { type UserEvent, type SpecialDate, type CalendarEvent, type ChatMessage, type AiProvider } from './types';
 import { getSpecialDates } from './services/uaeDatesService';
 import { discoverEventsForMonth, getChatResponse } from './services/aiService';
-import { sendDiscordWebhook } from './services/discordService';
 
 // --- Chat Modal Component ---
 const ChatModal: React.FC<{
@@ -132,8 +131,13 @@ const App: React.FC = () => {
     try {
       const newEvents = await discoverEventsForMonth(year, month);
       
-      const existingEventKeys = new Set(allEvents.map(e => `${(e.type === 'user' ? e.title : e.name)}_${e.date.toDateString()}`));
-      const uniqueNewEvents = newEvents.filter(newEvent => !existingEventKeys.has(`${newEvent.name}_${newEvent.date.toDateString()}`));
+      const getEventKey = (e: CalendarEvent | SpecialDate) => {
+          const name = 'title' in e ? e.title : e.name;
+          return `${name.trim()}_${e.date.toDateString()}`;
+      };
+
+      const existingEventKeys = new Set(allEvents.map(getEventKey));
+      const uniqueNewEvents = newEvents.filter(newEvent => !existingEventKeys.has(getEventKey(newEvent)));
 
       if (uniqueNewEvents.length > 0) {
         setDiscoveredEvents(prev => [...prev, ...uniqueNewEvents]);
