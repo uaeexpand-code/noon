@@ -220,13 +220,39 @@ const runDiscoveryTask = async () => {
     const today = new Date();
     const monthName = today.toLocaleString('default', { month: 'long' });
     const year = today.getFullYear();
-    const prompt = `As an expert market researcher for UAE e-commerce, identify key events in the UAE for ${monthName} ${year}. I need a JSON array of objects. Each object must have 'date' (string in YYYY-MM-DD format), 'name' (string), and 'category' (string). Include: 'E-commerce Sale', 'Global Event', 'Cultural', 'Sporting', 'Trending'.`;
+    const prompt = `Using Google Search, find key commercial, cultural, sporting, or trending events relevant to e-commerce sellers in the UAE for ${monthName} ${year}. Return the result as a JSON array of objects. Each object must have 'date' (YYYY-MM-DD string), 'name' (string), and 'category' (string). Categories can be: 'E-commerce Sale', 'Global Event', 'Cultural', 'Sporting', 'Trending'. Do not include well-known holidays like New Year's or National Day unless there is a specific new event associated with them this year. Focus on discoverable, potentially less-obvious events.`;
 
     try {
-        let newEventsRaw;
-        if (aiProvider === 'openai') newEventsRaw = await handleOpenAiRequest(openaiApiKey, openaiModel, [{ role: 'user', content: prompt }], true);
-        else if (aiProvider === 'openrouter') newEventsRaw = await handleOpenRouterRequest(openrouterApiKey, openrouterModel, [{ role: 'user', content: prompt }], true);
-        else newEventsRaw = await handleGeminiRequest(prompt, true);
+        let newEventsRaw = [];
+        let sources = [];
+        if (aiProvider === 'openai') {
+            newEventsRaw = await handleOpenAiRequest(openaiApiKey, openaiModel, [{ role: 'user', content: prompt }], true);
+        } else if (aiProvider === 'openrouter') {
+            newEventsRaw = await handleOpenRouterRequest(openrouterApiKey, openrouterModel, [{ role: 'user', content: prompt }], true);
+        } else {
+            if (!ai) throw new Error("Gemini AI service not configured on the server.");
+            
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+                config: { tools: [{googleSearch: {}}] },
+            });
+
+            const text = response.text.trim();
+            try {
+                const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/);
+                newEventsRaw = JSON.parse(jsonMatch ? jsonMatch[1] : text);
+            } catch (e) {
+                console.error("Failed to parse JSON from automated discovery:", text);
+                newEventsRaw = [];
+            }
+            
+            const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+            sources = groundingChunks
+                .map(chunk => chunk.web && { uri: chunk.web.uri, title: chunk.web.title })
+                .filter(Boolean)
+                .filter((source, index, self) => index === self.findIndex(s => s.uri === source.uri));
+        }
 
         const discoveredEvents = await readJSON(DISCOVERED_EVENTS_FILE, []);
         const existingEventKeys = new Set(discoveredEvents.map(e => `${e.name}_${e.date}`));
@@ -237,7 +263,8 @@ const runDiscoveryTask = async () => {
             console.log(`Found ${uniqueNewEvents.length} new events!`);
             await writeJSON(DISCOVERED_EVENTS_FILE, [...discoveredEvents, ...uniqueNewEvents]);
             const description = uniqueNewEvents.map(e => `**\`${e.date}\`**: ${e.name} *(${e.category})*`).join('\n');
-            await sendDiscordWebhook(webhookUrl, { embeds: [{ title: `🤖 New Events Discovered!`, description, color: 0x2ECC71 }] });
+            const sourceText = sources.length > 0 ? `\n\n**Sources:**\n${sources.map((s,i) => `${i+1}. [${s.title || s.uri}](${s.uri})`).join('\n')}` : '';
+            await sendDiscordWebhook(webhookUrl, { embeds: [{ title: `🤖 New Events Discovered!`, description: description + sourceText, color: 0x2ECC71 }] });
         } else {
             console.log('No new events found.');
         }
@@ -465,13 +492,40 @@ app.post('/api/ai/:action', async (req, res) => {
     } else if (action === 'discoverEvents') {
         const { year, month } = payload;
         const monthName = new Date(year, month).toLocaleString('default', { month: 'long' });
-        const prompt = `As an expert market researcher for UAE e-commerce, identify key events in the UAE for ${monthName} ${year}. I need a JSON array of objects. Each object must have 'date' (string in YYYY-MM-DD format), 'name' (string), and 'category' (string). Include 'E-commerce Sale', 'Global Event', 'Cultural', 'Sporting', 'Trending'.`;
+        const prompt = `Using Google Search, find key commercial, cultural, sporting, or trending events relevant to e-commerce sellers in the UAE for ${monthName} ${year}. Return the result as a JSON array of objects. Each object must have 'date' (YYYY-MM-DD string), 'name' (string), and 'category' (string). Categories can be: 'E-commerce Sale', 'Global Event', 'Cultural', 'Sporting', 'Trending'. Do not include well-known holidays like New Year's or National Day unless there is a specific new event associated with them this year. Focus on discoverable, potentially less-obvious events.`;
+        
         if (aiProvider === 'openai') {
-            result = await handleOpenAiRequest(openaiApiKey, openaiModel, [{ role: 'user', content: prompt }], true);
+            const events = await handleOpenAiRequest(openaiApiKey, openaiModel, [{ role: 'user', content: prompt }], true);
+            result = { events, sources: [] };
         } else if (aiProvider === 'openrouter') {
-            result = await handleOpenRouterRequest(openrouterApiKey, openrouterModel, [{ role: 'user', content: prompt }], true);
+            const events = await handleOpenRouterRequest(openrouterApiKey, openrouterModel, [{ role: 'user', content: prompt }], true);
+            result = { events, sources: [] };
         } else {
-            result = await handleGeminiRequest(prompt, true);
+            if (!ai) throw new Error("Gemini AI service not configured on the server.");
+    
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+                config: { tools: [{googleSearch: {}}] },
+            });
+            
+            const text = response.text.trim();
+            let eventsResult = [];
+            try {
+                const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/);
+                eventsResult = JSON.parse(jsonMatch ? jsonMatch[1] : text);
+            } catch (e) {
+                console.error("Failed to parse JSON from Gemini response:", text);
+                throw new Error("AI returned a non-JSON response.");
+            }
+
+            const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+            const sources = groundingChunks
+                .map(chunk => chunk.web && { uri: chunk.web.uri, title: chunk.web.title })
+                .filter(Boolean)
+                .filter((source, index, self) => index === self.findIndex(s => s.uri === source.uri)); // Deduplicate sources
+
+            result = { events: eventsResult, sources: sources };
         }
     } else if (action === 'chat') {
         const { message, history, events } = payload;

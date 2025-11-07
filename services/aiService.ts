@@ -56,23 +56,25 @@ export const generateMarketingIdeas = async (event: SpecialDate | { name: string
   }
 };
 
-export const discoverEventsForMonth = async (year: number, month: number): Promise<SpecialDate[]> => {
+export const discoverEventsForMonth = async (year: number, month: number): Promise<{ events: SpecialDate[], sources: { uri: string, title: string }[] }> => {
     try {
-        const discovered = await fetchFromProxy('discoverEvents', {
+        const result = await fetchFromProxy('discoverEvents', {
             year,
             month,
-            // The schema is now handled by the server based on the provider
         });
         
-        if (Array.isArray(discovered)) {
-            return discovered.map(item => ({
-                ...item,
-                date: new Date(item.date + 'T00:00:00'), // Ensure date is parsed correctly as local time
-            })).filter(item => !isNaN(item.date.getTime()));
-        }
-        return [];
+        const events = Array.isArray(result.events) ? result.events.map((item: any) => ({
+            ...item,
+            date: new Date(item.date + 'T00:00:00'), // Ensure date is parsed correctly as local time
+        })).filter((item: any) => !isNaN(item.date.getTime())) : [];
+
+        const sources = Array.isArray(result.sources) ? result.sources : [];
+
+        return { events, sources };
+
     } catch (error) {
-        return [];
+        console.error("Failed to discover events from proxy:", error);
+        return { events: [], sources: [] };
     }
 };
 

@@ -95,6 +95,7 @@ const App: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [lastDiscoverySources, setLastDiscoverySources] = useState<{ uri: string; title: string; }[]>([]);
   const isInitialMount = useRef(true);
   
   // --- Settings State ---
@@ -128,11 +129,12 @@ const App: React.FC = () => {
 
   const handleDiscoverEvents = async () => {
     setIsDiscovering(true);
+    setLastDiscoverySources([]); // Clear previous sources on new discovery
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     
     try {
-      const newEvents = await discoverEventsForMonth(year, month);
+      const { events: newEvents, sources } = await discoverEventsForMonth(year, month);
       
       const getEventKey = (e: CalendarEvent | SpecialDate) => {
           const name = 'title' in e ? e.title : e.name;
@@ -144,6 +146,9 @@ const App: React.FC = () => {
 
       if (uniqueNewEvents.length > 0) {
         setDiscoveredEvents(prev => [...prev, ...uniqueNewEvents]);
+        if (sources.length > 0) {
+          setLastDiscoverySources(sources);
+        }
       }
     } catch (error) {
       console.error("Failed to discover events:", error);
@@ -358,6 +363,28 @@ const App: React.FC = () => {
           setViewMode={setViewMode}
           onOpenChat={openChat}
         />
+        {lastDiscoverySources.length > 0 && (
+            <div className="my-4 p-4 bg-gray-800 rounded-xl shadow-lg animate-fadeIn border border-teal-500/30">
+                <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-semibold text-teal-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                        <span>Events discovered using Google Search. Sources:</span>
+                    </h3>
+                    <button onClick={() => setLastDiscoverySources([])} className="p-1 rounded-full text-gray-400 hover:bg-gray-700 hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+                <ul className="mt-2 text-xs list-none space-y-1 pl-6">
+                    {lastDiscoverySources.map((source, index) => (
+                        <li key={index} className="truncate">
+                            <a href={source.uri} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline" title={source.title || source.uri}>
+                                {source.title || new URL(source.uri).hostname}
+                            </a>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        )}
         <main>
           <Calendar 
             viewMode={viewMode}
