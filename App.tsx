@@ -108,6 +108,7 @@ const App: React.FC = () => {
   const [isAutoNotifyEnabled, setIsAutoNotifyEnabled] = useState(false);
   const [notifyDaysBefore, setNotifyDaysBefore] = useState(7);
   const [isDailyBriefingEnabled, setIsDailyBriefingEnabled] = useState(false);
+  const [dailyBriefingTime, setDailyBriefingTime] = useState('08:00');
 
   const specialDates = useMemo(
     () => getSpecialDates(currentDate.getFullYear()),
@@ -168,6 +169,7 @@ const App: React.FC = () => {
         setIsAutoNotifyEnabled(settings.isAutoNotifyEnabled || false);
         setNotifyDaysBefore(settings.notifyDaysBefore || 7);
         setIsDailyBriefingEnabled(settings.isDailyBriefingEnabled || false);
+        setDailyBriefingTime(settings.dailyBriefingTime || '08:00');
       } catch (error) { console.error('Failed to load settings:', error); }
       
       // Fetch server-discovered events
@@ -268,6 +270,7 @@ const App: React.FC = () => {
       isAutoNotifyEnabled: boolean;
       notifyDaysBefore: number;
       isDailyBriefingEnabled: boolean;
+      dailyBriefingTime: string;
   }) => {
     // Update state immediately for responsive UI
     setDiscordWebhookUrl(settings.webhookUrl);
@@ -279,6 +282,7 @@ const App: React.FC = () => {
     setIsAutoNotifyEnabled(settings.isAutoNotifyEnabled);
     setNotifyDaysBefore(settings.notifyDaysBefore);
     setIsDailyBriefingEnabled(settings.isDailyBriefingEnabled);
+    setDailyBriefingTime(settings.dailyBriefingTime);
     
     // Save to server
     try {
@@ -382,6 +386,7 @@ const App: React.FC = () => {
           isAutoNotifyEnabled={isAutoNotifyEnabled}
           notifyDaysBefore={notifyDaysBefore}
           isDailyBriefingEnabled={isDailyBriefingEnabled}
+          dailyBriefingTime={dailyBriefingTime}
         />
       )}
       <ChatModal

@@ -18,6 +18,7 @@ interface SettingsModalProps {
     isAutoNotifyEnabled: boolean;
     notifyDaysBefore: number;
     isDailyBriefingEnabled: boolean;
+    dailyBriefingTime: string;
   }) => void;
   currentWebhookUrl: string;
   isAutoDiscoverEnabled: boolean;
@@ -28,6 +29,7 @@ interface SettingsModalProps {
   isAutoNotifyEnabled: boolean;
   notifyDaysBefore: number;
   isDailyBriefingEnabled: boolean;
+  dailyBriefingTime: string;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -43,6 +45,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   isAutoNotifyEnabled,
   notifyDaysBefore,
   isDailyBriefingEnabled,
+  dailyBriefingTime,
 }) => {
   const [webhookUrl, setWebhookUrl] = useState(currentWebhookUrl);
   const [autoDiscover, setAutoDiscover] = useState(isAutoDiscoverEnabled);
@@ -54,6 +57,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [autoNotify, setAutoNotify] = useState(isAutoNotifyEnabled);
   const [daysBefore, setDaysBefore] = useState(notifyDaysBefore);
   const [dailyBriefing, setDailyBriefing] = useState(isDailyBriefingEnabled);
+  const [briefingTime, setBriefingTime] = useState(dailyBriefingTime);
 
   const [testStatus, setTestStatus] = useState<Record<AiProvider, TestStatus>>({
       gemini: 'idle',
@@ -107,6 +111,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       isAutoNotifyEnabled: autoNotify,
       notifyDaysBefore: Number(daysBefore) || 7,
       isDailyBriefingEnabled: dailyBriefing,
+      dailyBriefingTime: briefingTime,
     });
   };
 
@@ -207,6 +212,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                        </div>
                     )}
                 </div>
+
+                {(dailyBriefing || autoNotify) && (
+                    <>
+                        <div className="border-t border-gray-700/50 !mt-4 !mb-4"></div>
+                        <div className="animate-fadeIn px-1">
+                            <label htmlFor="briefing-time" className="block text-sm font-medium text-gray-300 mb-1">Daily Notification Time</label>
+                            <input type="time" id="briefing-time" value={briefingTime} onChange={e => setBriefingTime(e.target.value)} className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200" aria-describedby="briefing-time-description"/>
+                            <p id="briefing-time-description" className="mt-2 text-xs text-gray-400">The time of day (in UAE timezone) when briefings and reminders will be sent to Discord.</p>
+                        </div>
+                    </>
+                )}
             </div>
           </div>
           

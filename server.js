@@ -323,11 +323,43 @@ const checkAndSendNotifications = async () => {
     }
 };
 
+// --- Cron Job Management ---
+let notificationTask = null;
+let discoveryTask = null;
+
+const rescheduleNotificationTask = async () => {
+    if (notificationTask) {
+        notificationTask.stop();
+    }
+
+    const settings = await readJSON(SETTINGS_FILE, {});
+    const { dailyBriefingTime = '08:00', isDailyBriefingEnabled, isAutoNotifyEnabled } = settings;
+    
+    // Only schedule the job if at least one feature is enabled.
+    if (isDailyBriefingEnabled || isAutoNotifyEnabled) {
+        const [hour, minute] = dailyBriefingTime.split(':');
+        
+        if (isNaN(parseInt(hour, 10)) || isNaN(parseInt(minute, 10))) {
+            console.error(`Invalid dailyBriefingTime format: ${dailyBriefingTime}. Defaulting to 08:00.`);
+            notificationTask = cron.schedule('0 8 * * *', checkAndSendNotifications, { timezone: "Asia/Dubai" });
+        } else {
+            const cronString = `${minute} ${hour} * * *`;
+            notificationTask = cron.schedule(cronString, checkAndSendNotifications, { timezone: "Asia/Dubai" });
+            console.log(`Scheduled automated notifications to run daily at ${dailyBriefingTime} (Asia/Dubai).`);
+        }
+    } else {
+        console.log('Automated notifications are disabled, task not scheduled.');
+    }
+};
+
+
 // --- API Endpoints ---
 app.post('/api/settings', async (req, res) => {
     const currentSettings = await readJSON(SETTINGS_FILE, {});
     const newSettings = { ...currentSettings, ...req.body };
     await writeJSON(SETTINGS_FILE, newSettings);
+    // Reschedule notifications based on potentially new settings
+    await rescheduleNotificationTask();
     res.status(200).json({ message: 'Settings saved.' });
 });
 
@@ -343,6 +375,7 @@ app.get('/api/settings', async (req, res) => {
         isAutoNotifyEnabled: false,
         notifyDaysBefore: 7,
         isDailyBriefingEnabled: false,
+        dailyBriefingTime: '08:00',
     });
     res.json(settings);
 });
@@ -465,13 +498,14 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`Server is running on http://localhost:${port}`);
+  
   // Schedule background tasks
-  cron.schedule('0 3 * * *', runDiscoveryTask);
-  console.log('Scheduled automated event discovery to run daily at 3:00 AM.');
-  cron.schedule('0 8 * * *', checkAndSendNotifications);
-  console.log('Scheduled automated notifications to run daily at 8:00 AM.');
+  discoveryTask = cron.schedule('0 3 * * *', runDiscoveryTask, { timezone: "Asia/Dubai" });
+  console.log('Scheduled automated event discovery to run daily at 3:00 AM (Asia/Dubai).');
+  
+  await rescheduleNotificationTask();
 
   // Run tasks on startup after a short delay
   setTimeout(() => {
