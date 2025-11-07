@@ -1,7 +1,6 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { type UserEvent, type SpecialDate } from '../types';
-import { generateMarketingIdeas } from '../services/geminiService';
+import React, { useState, useEffect } from 'react';
+import { type UserEvent } from '../types';
 import { sendDiscordWebhook } from '../services/discordService';
 
 interface EventModalProps {
@@ -9,7 +8,7 @@ interface EventModalProps {
   onClose: () => void;
   date: Date;
   event: UserEvent | null;
-  onSave: (eventData: Omit<UserEvent, 'id' | 'source'>) => void;
+  onSave: (eventData: Omit<UserEvent, 'id' | 'source' | 'date'>) => void;
   onDelete: (eventId: string) => void;
   discordWebhookUrl: string;
 }
@@ -17,45 +16,6 @@ interface EventModalProps {
 const CopyIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-5 w-5"} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
 );
-const SparklesIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-5 w-5"} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.293 2.293a1 1 0 010 1.414L10 16l-4 4-4-4 5.293-5.293a1 1 0 011.414 0L10 12m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2.293l2.293-2.293a1 1 0 000-1.414L18 4l-4 4-4-4 5.293 5.293a1 1 0 001.414 0L18 10m0 0l2 2m-2-2l-2 2" /></svg>
-);
-
-const IdeaGenerator: React.FC<{ event: UserEvent | SpecialDate | { name: string; category: string } }> = ({ event }) => {
-    const [ideas, setIdeas] = useState<string[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-
-    const handleGenerateIdeas = useCallback(async () => {
-        setIsLoading(true);
-        setIdeas([]);
-        const eventInfo = 'title' in event 
-            ? { name: event.title, category: 'Custom Event' } 
-            : { name: event.name, category: event.category };
-        const result = await generateMarketingIdeas(eventInfo);
-        setIdeas(result);
-        setIsLoading(false);
-    }, [event]);
-
-    return (
-        <div className="mt-4 p-4 bg-gray-700/50 rounded-lg">
-            <h4 className="font-semibold text-gray-200 flex items-center">
-                <SparklesIcon className="h-5 w-5 mr-2 text-cyan-400"/>
-                Brilliant Idea Generator
-            </h4>
-            <p className="text-xs text-gray-400 mb-3">Get AI-powered marketing ideas for this event.</p>
-            <button onClick={handleGenerateIdeas} disabled={isLoading} className="w-full px-4 py-2 text-sm font-medium text-white bg-cyan-600 rounded-md hover:bg-cyan-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 active:scale-95">
-                {isLoading ? 'Generating...' : 'Generate Ideas'}
-            </button>
-            {ideas.length > 0 && (
-                <ul className="mt-4 space-y-2 text-sm text-gray-300">
-                    {ideas.map((idea, index) => (
-                        <li key={index} className="p-3 bg-gray-800 rounded-md list-disc list-inside ml-2 animate-fadeIn" style={{ animationDelay: `${index * 100}ms`}}>{idea}</li>
-                    ))}
-                </ul>
-            )}
-        </div>
-    );
-};
 
 const DiscordReminder: React.FC<{
   webhookUrl: string;
@@ -174,7 +134,7 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, date, e
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (title) {
-        onSave({ date, title, description });
+        onSave({ title, description });
     }
   };
   
@@ -211,10 +171,6 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, date, e
             eventDescription={description}
             eventDate={date}
           />
-          
-          {/* FIX: The object passed to IdeaGenerator must match one of the types in the union prop type. 
-              Changing 'title' to 'name' makes the object structurally compatible with the 'SpecialDate' type. */}
-          <IdeaGenerator event={{ name: title || 'New Event', date, category: 'Custom Event' }} />
 
           <div className="pt-4 flex justify-between items-center">
             <div>

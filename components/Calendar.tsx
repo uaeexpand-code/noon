@@ -7,7 +7,7 @@ type ViewMode = 'month' | 'week' | 'year';
 interface CalendarProps {
   currentDate: Date;
   events: CalendarEvent[];
-  onDateSelect: (date: Date, event?: UserEvent) => void;
+  onDateSelect: (date: Date) => void;
   viewMode: ViewMode;
   setCurrentDate: (date: Date) => void;
   setViewMode: (view: ViewMode) => void;
@@ -16,7 +16,7 @@ interface CalendarProps {
 // --- Styling and Utility Functions ---
 
 const getEventTypeStyle = (event: CalendarEvent) => {
-  if (event.type === 'user') return 'bg-purple-600/80 hover:bg-purple-500 text-white cursor-pointer';
+  if (event.type === 'user') return 'bg-purple-600/80 hover:bg-purple-500 text-white';
   if (event.type === 'discovered') return 'bg-teal-600/80 text-white';
   
   switch (event.category) {
@@ -39,37 +39,37 @@ const DayCell: React.FC<{
   isToday: boolean;
   isCurrentMonth?: boolean; // Optional for week view
   dayEvents: CalendarEvent[];
-  onDateSelect: (date: Date, event?: UserEvent) => void;
+  onDateSelect: (date: Date) => void;
   isTall?: boolean; // For week view
 }> = ({ date, isToday, isCurrentMonth = true, dayEvents, onDateSelect, isTall = false }) => {
-  
-  const handleCellClick = () => onDateSelect(date);
-  const handleEventClick = (e: React.MouseEvent, event: UserEvent) => {
-    e.stopPropagation();
-    onDateSelect(date, event);
-  };
+  const MAX_VISIBLE_EVENTS = 3;
+  const hiddenEventsCount = dayEvents.length - MAX_VISIBLE_EVENTS;
 
   const cellClasses = `relative flex flex-col p-2 border border-gray-700/50 transition-all duration-200 group overflow-hidden rounded-lg transform hover:scale-105 hover:z-10 hover:shadow-2xl ${isCurrentMonth ? 'bg-gray-800 hover:bg-gray-700/70 cursor-pointer' : 'bg-gray-900/50 text-gray-500'} ${isTall ? 'min-h-[120px]' : 'aspect-square'}`;
   const dayNumberClasses = `text-xs sm:text-sm font-semibold flex items-center justify-center h-6 w-6 rounded-full transition-colors duration-200 ${isToday ? 'bg-cyan-500 text-white' : 'text-gray-300 group-hover:text-white'}`;
   
   return (
-    <div className={cellClasses} onClick={handleCellClick}>
+    <div className={cellClasses} onClick={() => onDateSelect(date)}>
       <div className="flex justify-end">
         <span className={dayNumberClasses}>{date.getDate()}</span>
       </div>
-      <div className="flex-grow overflow-y-auto mt-1 space-y-1 pr-1 -mr-2">
-         {dayEvents.map((event, index) => (
+      <div className="flex-grow mt-1 space-y-1">
+         {dayEvents.slice(0, MAX_VISIBLE_EVENTS).map((event, index) => (
            <div
               key={event.type === 'user' ? event.id : event.name + index}
-              onClick={(e) => event.type === 'user' && handleEventClick(e, event)}
               className={`flex items-center text-xs px-1.5 py-0.5 rounded-md transition-colors duration-200 overflow-hidden ${getEventTypeStyle(event)}`}
-              title={event.source && event.source !== 'built-in' ? `Source: ${event.source}` : undefined}
+              title={event.source && event.source !== 'built-in' ? `Source: ${event.source}` : (event.type === 'user' ? event.title : event.name)}
             >
               {event.source === 'manual' && <span className="mr-1" title="Manual Event">👤</span>}
               {event.source && event.source !== 'manual' && event.source !== 'built-in' && <span className="mr-1" title={`Discovered by: ${event.source}`}>✨</span>}
               <span className="truncate">{event.type === 'user' ? event.title : event.name}</span>
             </div>
           ))}
+          {hiddenEventsCount > 0 && (
+            <div className="text-xs text-cyan-400 font-semibold px-1 py-0.5">
+              + {hiddenEventsCount} more
+            </div>
+          )}
       </div>
     </div>
   );

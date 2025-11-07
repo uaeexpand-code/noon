@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Calendar } from './components/Calendar';
+import { DayDetailsModal } from './components/DayDetailsModal';
 import { EventModal } from './components/EventModal';
 import { Header } from './components/Header';
 import { SettingsModal } from './components/SettingsModal';
@@ -88,8 +89,8 @@ const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'year'>('month');
   const [userEvents, setUserEvents] = useState<UserEvent[]>([]);
   const [discoveredEvents, setDiscoveredEvents] = useState<SpecialDate[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [editingEvent, setEditingEvent] = useState<UserEvent | null>(null);
+  const [dayDetailsModalDate, setDayDetailsModalDate] = useState<Date | null>(null);
+  const [eventModalState, setEventModalState] = useState<{ isOpen: boolean; date: Date | null; eventToEdit: UserEvent | null; }>({ isOpen: false, date: null, eventToEdit: null });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -250,32 +251,35 @@ const App: React.FC = () => {
     }).catch(error => console.error("Failed to save chat history:", error));
   }, [chatMessages]);
 
-  const handleDateSelect = (date: Date, event?: UserEvent) => {
-    setSelectedDate(date);
-    if(event) {
-      setEditingEvent(event);
-    } else {
-      setEditingEvent(null);
-    }
+  const handleDateSelect = (date: Date) => {
+    setDayDetailsModalDate(date);
   };
 
-  const closeModal = () => {
-    setSelectedDate(null);
-    setEditingEvent(null);
+  const closeDayDetailsModal = () => {
+    setDayDetailsModalDate(null);
   };
 
+  const openEventModal = (date: Date, event: UserEvent | null = null) => {
+    setEventModalState({ isOpen: true, date, eventToEdit: event });
+    setDayDetailsModalDate(null); // Close day details when opening event modal
+  };
+
+  const closeEventModal = () => {
+    setEventModalState({ isOpen: false, date: null, eventToEdit: null });
+  };
+  
   const addOrUpdateEvent = (event: Omit<UserEvent, 'id' | 'source'>) => {
-    if (editingEvent) {
-      setUserEvents(prev => prev.map(e => e.id === editingEvent.id ? { ...editingEvent, ...event } : e));
+    if (eventModalState.eventToEdit) {
+      setUserEvents(prev => prev.map(e => e.id === eventModalState.eventToEdit!.id ? { ...eventModalState.eventToEdit!, ...event } : e));
     } else {
-      setUserEvents(prev => [...prev, { ...event, id: Date.now().toString(), source: 'manual' }]);
+      setUserEvents(prev => [...prev, { ...event, date: eventModalState.date!, id: Date.now().toString(), source: 'manual' }]);
     }
-    closeModal();
+    closeEventModal();
   };
 
   const deleteEvent = (eventId: string) => {
     setUserEvents(prev => prev.filter(e => e.id !== eventId));
-    closeModal();
+    closeEventModal();
   };
 
   const handleSaveSettings = async (settings: { 
@@ -405,12 +409,21 @@ const App: React.FC = () => {
           />
         </main>
       </div>
-      {selectedDate && (
+      {dayDetailsModalDate && (
+        <DayDetailsModal
+          date={dayDetailsModalDate}
+          events={allEvents.filter(e => e.date.toDateString() === dayDetailsModalDate.toDateString())}
+          onClose={closeDayDetailsModal}
+          onAddEvent={() => openEventModal(dayDetailsModalDate)}
+          onEditEvent={(event) => openEventModal(dayDetailsModalDate, event)}
+        />
+      )}
+      {eventModalState.isOpen && (
         <EventModal
-          isOpen={!!selectedDate}
-          onClose={closeModal}
-          date={selectedDate}
-          event={editingEvent}
+          isOpen={eventModalState.isOpen}
+          onClose={closeEventModal}
+          date={eventModalState.date!}
+          event={eventModalState.eventToEdit}
           onSave={addOrUpdateEvent}
           onDelete={deleteEvent}
           discordWebhookUrl={discordWebhookUrl}
