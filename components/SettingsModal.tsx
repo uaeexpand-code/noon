@@ -1,9 +1,132 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { type AiProvider } from '../types';
 import { testAiConnection } from '../services/aiService';
 
 type TestStatus = 'idle' | 'testing' | 'success' | 'error';
+
+const AI_MODELS = [
+    { id: 'gpt-4o', displayName: 'GPT-4o', description: 'Fast, intelligent, flexible GPT model' },
+    { id: 'gpt-4o-mini', displayName: 'GPT-4o mini', description: 'Fast, affordable small model for focused tasks' },
+    { id: 'gpt-4-turbo', displayName: 'GPT-4 Turbo', description: 'An older high-intelligence GPT model' },
+    { id: 'gpt-3.5-turbo', displayName: 'GPT-3.5 Turbo', description: 'Legacy GPT model for cheaper chat and non-chat tasks' },
+    { id: 'dall-e-3', displayName: 'DALL·E 3', description: 'Image generation model' },
+    { id: 'anthropic/claude-3-haiku', displayName: 'Claude 3 Haiku (Anthropic)', description: 'Fastest and most compact model for near-instant responsiveness.' },
+    { id: 'anthropic/claude-3-sonnet', displayName: 'Claude 3 Sonnet (Anthropic)', description: 'Ideal balance of intelligence and speed.' },
+    { id: 'anthropic/claude-3-opus', displayName: 'Claude 3 Opus (Anthropic)', description: 'Most powerful model for highly complex tasks.' },
+    { id: 'mistralai/mistral-7b-instruct-free', displayName: 'Mistral 7B Instruct (Free)', description: 'A fast and helpful model from Mistral AI.' },
+    { id: 'google/gemini-pro', displayName: 'Gemini Pro (Google)', description: 'Google\'s capable multimodal model.' },
+    { id: 'gpt-5', displayName: 'GPT-5', description: 'The best model for coding and agentic tasks across domains' },
+    { id: 'gpt-5-mini', displayName: 'GPT-5 mini', description: 'A faster, cost-efficient version of GPT-5 for well-defined tasks' },
+    { id: 'gpt-5-nano', displayName: 'GPT-5 nano', description: 'Fastest, most cost-efficient version of GPT-5' },
+    { id: 'sora-2', displayName: 'Sora 2', description: 'Flagship video generation with synced audio' },
+    { id: 'dall-e-2', displayName: 'DALL·E 2', description: 'An older image generation model' },
+    { id: 'gpt-4', displayName: 'GPT-4', description: 'An older high-intelligence GPT model' },
+    { id: 'text-embedding-3-large', displayName: 'Embedding 3 Large', description: 'Most capable embedding model' },
+    { id: 'text-embedding-3-small', displayName: 'Embedding 3 Small', description: 'Small embedding model' },
+    { id: 'text-embedding-ada-002', displayName: 'Embedding Ada 002', description: 'Older embedding model' },
+    { id: 'tts-1', displayName: 'TTS-1', description: 'Text-to-speech model optimized for speed' },
+    { id: 'tts-1-hd', displayName: 'TTS-1 HD', description: 'Text-to-speech model optimized for quality' },
+];
+
+const ChevronDownIcon: React.FC = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+);
+
+interface ModelSelectorProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}
+
+const ModelSelector: React.FC<ModelSelectorProps> = ({ value, onChange, placeholder }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+    
+    useEffect(() => {
+        if (!isOpen) {
+            setSearchTerm('');
+        }
+    }, [isOpen]);
+
+    const filteredModels = useMemo(() => {
+        if (!searchTerm) return AI_MODELS;
+        return AI_MODELS.filter(model =>
+            model.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            model.id.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [searchTerm]);
+
+    const handleSelect = (modelId: string) => {
+        onChange(modelId);
+        setIsOpen(false);
+        inputRef.current?.blur();
+    };
+
+    const selectedModel = AI_MODELS.find(m => m.id === value);
+
+    return (
+        <div className="relative" ref={dropdownRef}>
+            <div className="relative">
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={value}
+                    onChange={e => onChange(e.target.value)}
+                    onFocus={() => setIsOpen(true)}
+                    placeholder={placeholder}
+                    className="w-full pl-3 pr-10 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                     <ChevronDownIcon />
+                </div>
+            </div>
+
+            {isOpen && (
+                <div className="absolute z-20 w-full mt-1 bg-gray-800 border border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    <div className="p-2">
+                        <input
+                            type="text"
+                            placeholder="Search models..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="w-full px-3 py-2 text-sm bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                        />
+                    </div>
+                    <ul>
+                        {filteredModels.length > 0 ? filteredModels.map(model => (
+                            <li
+                                key={model.id}
+                                onMouseDown={() => handleSelect(model.id)}
+                                className={`px-4 py-2 cursor-pointer hover:bg-cyan-600 ${value === model.id ? 'bg-cyan-700' : ''}`}
+                            >
+                                <p className="font-semibold text-sm">{model.displayName}</p>
+                                <p className="text-xs text-gray-400">{model.description}</p>
+                            </li>
+                        )) : (
+                            <li className="px-4 py-2 text-sm text-gray-400">No models found. You can still type a custom model name.</li>
+                        )}
+                    </ul>
+                </div>
+            )}
+        </div>
+    );
+};
+
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -169,7 +292,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                         <div>
                             <label htmlFor="openaiModel" className="block text-sm font-medium text-gray-300 mb-1">OpenAI Model Name</label>
-                            <input type="text" id="openaiModel" value={openaiModel} onChange={e => setOpenaiModel(e.target.value)} placeholder="e.g., gpt-4o" className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200"/>
+                            <ModelSelector value={openaiModel} onChange={setOpenaiModel} placeholder="e.g., gpt-4o"/>
                         </div>
                     </div>
                 )}
@@ -186,8 +309,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                         <div>
                             <label htmlFor="openrouterModel" className="block text-sm font-medium text-gray-300 mb-1">OpenRouter Model Name</label>
-                            <input type="text" id="openrouterModel" value={openrouterModel} onChange={e => setOpenrouterModel(e.target.value)} placeholder="e.g., anthropic/claude-3-haiku" className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200"/>
-                             <p className="mt-2 text-xs text-gray-400">Find model names on the <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">OpenRouter Models page</a>.</p>
+                            <ModelSelector value={openrouterModel} onChange={setOpenrouterModel} placeholder="e.g., anthropic/claude-3-haiku"/>
+                            <p className="mt-2 text-xs text-gray-400">Find model names on the <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">OpenRouter Models page</a>.</p>
                         </div>
                     </div>
                 )}
