@@ -15,6 +15,9 @@ interface SettingsModalProps {
     aiProvider: AiProvider;
     openaiApiKey: string;
     openrouterApiKey: string;
+    isAutoNotifyEnabled: boolean;
+    notifyDaysBefore: number;
+    isDailyBriefingEnabled: boolean;
   }) => void;
   currentWebhookUrl: string;
   isAutoDiscoverEnabled: boolean;
@@ -22,6 +25,9 @@ interface SettingsModalProps {
   currentAiProvider: AiProvider;
   currentOpenaiApiKey: string;
   currentOpenrouterApiKey: string;
+  isAutoNotifyEnabled: boolean;
+  notifyDaysBefore: number;
+  isDailyBriefingEnabled: boolean;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -34,6 +40,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   currentAiProvider,
   currentOpenaiApiKey,
   currentOpenrouterApiKey,
+  isAutoNotifyEnabled,
+  notifyDaysBefore,
+  isDailyBriefingEnabled,
 }) => {
   const [webhookUrl, setWebhookUrl] = useState(currentWebhookUrl);
   const [autoDiscover, setAutoDiscover] = useState(isAutoDiscoverEnabled);
@@ -41,6 +50,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [aiProvider, setAiProvider] = useState<AiProvider>(currentAiProvider);
   const [openaiApiKey, setOpenaiApiKey] = useState(currentOpenaiApiKey);
   const [openrouterApiKey, setOpenrouterApiKey] = useState(currentOpenrouterApiKey);
+  
+  const [autoNotify, setAutoNotify] = useState(isAutoNotifyEnabled);
+  const [daysBefore, setDaysBefore] = useState(notifyDaysBefore);
+  const [dailyBriefing, setDailyBriefing] = useState(isDailyBriefingEnabled);
+
   const [testStatus, setTestStatus] = useState<Record<AiProvider, TestStatus>>({
       gemini: 'idle',
       openai: 'idle',
@@ -90,6 +104,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       aiProvider,
       openaiApiKey,
       openrouterApiKey,
+      isAutoNotifyEnabled: autoNotify,
+      notifyDaysBefore: Number(daysBefore) || 7,
+      isDailyBriefingEnabled: dailyBriefing,
     });
   };
 
@@ -154,9 +171,45 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <h4 className="text-md font-medium text-gray-200 mb-2">Integrations</h4>
             <label htmlFor="webhookUrl" className="block text-sm font-medium text-gray-300 mb-1">Discord Webhook URL</label>
             <input type="url" id="webhookUrl" value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} placeholder="https://discord.com/api/webhooks/..." className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200" aria-describedby="webhook-description"/>
-            <p id="webhook-description" className="mt-2 text-xs text-gray-400">This allows the app to send reminders and summaries directly to your Discord channel.</p>
+            <p id="webhook-description" className="mt-2 text-xs text-gray-400">This allows the app to send automated notifications and summaries directly to your Discord channel.</p>
           </div>
 
+          {/* --- Automated Notifications --- */}
+          <div className="space-y-4">
+            <h4 className="text-md font-medium text-gray-200">Automated Notifications</h4>
+            <div className="p-4 bg-gray-900/50 rounded-md space-y-4">
+                <div>
+                    <label htmlFor="daily-briefing-toggle" className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md cursor-pointer">
+                       <span className="text-sm font-medium text-gray-300 pr-4">Enable Daily Briefing</span>
+                       <div className="relative inline-flex items-center">
+                           <input type="checkbox" id="daily-briefing-toggle" checked={dailyBriefing} onChange={e => setDailyBriefing(e.target.checked)} className="sr-only peer" />
+                           <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-cyan-500 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
+                       </div>
+                   </label>
+                   <p className="mt-2 text-xs text-gray-400 px-1">Sends a summary of today's events to your Discord channel every morning, including an AI-powered marketing tip.</p>
+                </div>
+                
+                <div className="border-t border-gray-700/50 !mt-4 !mb-4"></div>
+
+                <div>
+                    <label htmlFor="auto-notify-toggle" className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md cursor-pointer">
+                        <span className="text-sm font-medium text-gray-300 pr-4">Enable Upcoming Event Reminders</span>
+                        <div className="relative inline-flex items-center">
+                           <input type="checkbox" id="auto-notify-toggle" checked={autoNotify} onChange={e => setAutoNotify(e.target.checked)} className="sr-only peer" />
+                           <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-cyan-500 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
+                       </div>
+                    </label>
+                    {autoNotify && (
+                       <div className="mt-3 animate-fadeIn px-1">
+                         <label htmlFor="notify-days" className="block text-sm font-medium text-gray-300 mb-1">Send reminder (days before)</label>
+                         <input type="number" id="notify-days" value={daysBefore} onChange={e => setDaysBefore(parseInt(e.target.value, 10))} min="1" className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200" aria-describedby="notify-days-description"/>
+                         <p id="notify-days-description" className="mt-2 text-xs text-gray-400">A reminder will be sent to Discord this many days before each event is scheduled.</p>
+                       </div>
+                    )}
+                </div>
+            </div>
+          </div>
+          
           {/* --- Automated Discovery --- */}
           <div className="space-y-4">
              <h4 className="text-md font-medium text-gray-200">Automated Event Discovery</h4>
@@ -170,10 +223,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
             </label>
              {autoDiscover && (
-                <div className="animate-fadeIn">
+                <div className="animate-fadeIn px-1">
                   <label htmlFor="frequency" className="block text-sm font-medium text-gray-300 mb-1">Run discovery every (days)</label>
                   <input type="number" id="frequency" value={frequency} onChange={e => setFrequency(parseInt(e.target.value, 10))} min="1" className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200" aria-describedby="frequency-description"/>
-                  <p id="frequency-description" className="mt-2 text-xs text-gray-400">The server will automatically check for new events in the background. If any are found, a notification will be sent to your Discord channel.</p>
+                  <p id="frequency-description" className="mt-2 text-xs text-gray-400">The server will automatically check for new events. If any are found, a notification will be sent to your Discord channel.</p>
                 </div>
               )}
           </div>

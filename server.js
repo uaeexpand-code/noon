@@ -20,6 +20,7 @@ const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const DISCOVERED_EVENTS_FILE = path.join(DATA_DIR, 'discovered-events.json');
 const USER_EVENTS_FILE = path.join(DATA_DIR, 'user-events.json');
 const CHAT_HISTORY_FILE = path.join(DATA_DIR, 'chat-history.json');
+const SENT_NOTIFICATIONS_FILE = path.join(DATA_DIR, 'sent-notifications.json');
 
 
 const writeJSON = async (filePath, data) => {
@@ -54,6 +55,52 @@ if (!GEMINI_API_KEY) {
   console.warn("API_KEY environment variable not set. Gemini features will be disabled unless another provider is configured.");
 }
 const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
+
+
+// --- Hardcoded UAE Dates (Server-side) ---
+const getApproximateIslamicDate = (baseYear, baseDate, targetYear) => {
+  const yearDiff = targetYear - baseYear;
+  const dayShift = Math.round(yearDiff * -10.875);
+  const dateForTargetYear = new Date(baseDate);
+  dateForTargetYear.setFullYear(targetYear);
+  dateForTargetYear.setDate(dateForTargetYear.getDate() + dayShift);
+  return dateForTargetYear;
+};
+
+const getSpecialDates = (year) => {
+  const BASE_YEAR = 2024;
+  const BASE_DATES = {
+    RAMADAN_BEGINS: new Date(BASE_YEAR, 2, 11), EID_AL_FITR: new Date(BASE_YEAR, 3, 10),
+    EID_AL_ADHA: new Date(BASE_YEAR, 5, 16), ISLAMIC_NEW_YEAR: new Date(BASE_YEAR, 6, 7),
+    PROPHETS_BIRTHDAY: new Date(BASE_YEAR, 8, 15),
+  };
+  return [
+    { date: new Date(year, 0, 1), name: "New Year's Day", category: 'Global Event' },
+    { date: new Date(year, 1, 14), name: "Valentine's Day", category: 'Commercial' },
+    { date: new Date(year, 2, 8), name: "International Women's Day", category: 'Global Event' },
+    { date: new Date(year, 2, 21), name: "Mother's Day (UAE)", category: 'Commercial' },
+    { date: getApproximateIslamicDate(BASE_YEAR, BASE_DATES.RAMADAN_BEGINS, year), name: "Ramadan Begins (approx.)", category: 'Religious' },
+    { date: getApproximateIslamicDate(BASE_YEAR, BASE_DATES.EID_AL_FITR, year), name: "Eid Al Fitr (approx.)", category: 'Religious' },
+    { date: getApproximateIslamicDate(BASE_YEAR, BASE_DATES.EID_AL_ADHA, year), name: "Eid Al Adha (approx.)", category: 'Religious' },
+    { date: getApproximateIslamicDate(BASE_YEAR, BASE_DATES.ISLAMIC_NEW_YEAR, year), name: "Islamic New Year (approx.)", category: 'Religious' },
+    { date: getApproximateIslamicDate(BASE_YEAR, BASE_DATES.PROPHETS_BIRTHDAY, year), name: "Prophet's Birthday (approx.)", category: 'Religious' },
+    { date: new Date(year, 4, 1), name: "Summer Heat Starts", category: 'Season' },
+    { date: new Date(year, 5, 21), name: "Father's Day", category: 'Commercial' },
+    { date: new Date(year, 6, 15), name: "Amazon Prime Day (approx.)", category: 'E-commerce Sale' },
+    { date: new Date(year, 7, 28), name: "Emirati Women's Day", category: 'National Holiday' },
+    { date: new Date(year, 7, 20), name: "Back to School Season", category: 'Commercial' },
+    { date: new Date(year, 9, 31), name: "Diwali (Commercial)", category: 'Commercial' },
+    { date: new Date(year, 10, 1), name: "Start of Cool Weather", category: 'Season' },
+    { date: new Date(year, 10, 11), name: "Singles' Day Sale (11.11)", category: 'E-commerce Sale' },
+    { date: new Date(year, 10, 29), name: "White/Yellow Friday Sale", category: 'E-commerce Sale' },
+    { date: new Date(year, 11, 1), name: "Commemoration Day", category: 'National Holiday' },
+    { date: new Date(year, 11, 1), name: "Winter Starts", category: 'Season' },
+    { date: new Date(year, 11, 2), name: "UAE National Day", category: 'National Holiday' },
+    { date: new Date(year, 11, 3), name: "UAE National Day Holiday", category: 'National Holiday' },
+    { date: new Date(year, 11, 12), name: "12.12 Sale", category: 'E-commerce Sale' },
+    { date: new Date(year, 11, 15), name: "Dubai Shopping Festival Starts", category: 'Commercial' },
+  ];
+};
 
 
 // --- Discord Webhook Helper ---
@@ -96,10 +143,7 @@ const handleOpenAiRequest = async (apiKey, messages, isJson = false) => {
     };
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         body: JSON.stringify(body),
     });
     if (!response.ok) throw new Error(`OpenAI API error: ${response.statusText}`);
@@ -110,17 +154,15 @@ const handleOpenAiRequest = async (apiKey, messages, isJson = false) => {
 
 const handleOpenRouterRequest = async (apiKey, messages, isJson = false) => {
     const body = {
-        model: "openai/gpt-3.5-turbo", // A default, cost-effective model
+        model: "openai/gpt-3.5-turbo",
         messages,
         ...(isJson && { response_format: { type: "json_object" } }),
     };
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-            'HTTP-Referer': `http://localhost:${port}`,
-            'X-Title': `UAE Seller's Smart Calendar`,
+            'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`,
+            'HTTP-Referer': `http://localhost:${port}`, 'X-Title': `UAE Seller's Smart Calendar`,
         },
         body: JSON.stringify(body),
     });
@@ -131,38 +173,40 @@ const handleOpenRouterRequest = async (apiKey, messages, isJson = false) => {
 };
 
 
-// --- Core Discovery Logic ---
+// --- Core Discovery & Notification Logic ---
+
+const getMarketingTip = async () => {
+    try {
+        const prompt = "Give me one short, insightful, and actionable marketing tip for an e-commerce seller in the UAE. Make it specific and creative. Don't add any intro or outro text, just the tip itself.";
+        const settings = await readJSON(SETTINGS_FILE, {});
+        const { aiProvider, openaiApiKey, openrouterApiKey } = settings;
+        if (aiProvider === 'openai' && openaiApiKey) {
+            return await handleOpenAiRequest(openaiApiKey, [{ role: 'user', content: prompt }]);
+        } else if (aiProvider === 'openrouter' && openrouterApiKey) {
+            return await handleOpenRouterRequest(openrouterApiKey, [{ role: 'user', content: prompt }]);
+        } else {
+            return await handleGeminiRequest(prompt);
+        }
+    } catch (e) {
+        console.error("Failed to get marketing tip:", e);
+        return "Focus on providing excellent customer service today. A happy customer is a repeat customer!";
+    }
+}
+
 const runDiscoveryTask = async () => {
     console.log('Running automated discovery task...');
     const settings = await readJSON(SETTINGS_FILE, {});
     const { aiProvider, openaiApiKey, openrouterApiKey, isAutoDiscoverEnabled, lastAutoDiscoverRun, autoDiscoverFrequency, webhookUrl } = settings;
 
-    if (!isAutoDiscoverEnabled) {
-        console.log('Automated discovery is disabled.');
-        return;
-    }
+    if (!isAutoDiscoverEnabled) return console.log('Automated discovery is disabled.');
 
     const now = new Date().getTime();
     const frequencyInMs = (autoDiscoverFrequency || 2) * 24 * 60 * 60 * 1000;
-    if (now - (lastAutoDiscoverRun || 0) < frequencyInMs) {
-        console.log('Not time to run discovery yet.');
-        return;
-    }
+    if (now - (lastAutoDiscoverRun || 0) < frequencyInMs) return console.log('Not time to run discovery yet.');
     
-    // --- Pre-flight configuration check to prevent crashes ---
-    if (aiProvider === 'gemini' && !ai) {
-        console.warn('Automated discovery skipped: Gemini API key not configured on server.');
-        return;
+    if ((aiProvider === 'gemini' && !ai) || (aiProvider === 'openai' && !openaiApiKey) || (aiProvider === 'openrouter' && !openrouterApiKey)) {
+      return console.warn(`Automated discovery skipped: ${aiProvider} API key not configured.`);
     }
-    if (aiProvider === 'openai' && !openaiApiKey) {
-        console.warn('Automated discovery skipped: OpenAI API key not configured in settings.');
-        return;
-    }
-    if (aiProvider === 'openrouter' && !openrouterApiKey) {
-        console.warn('Automated discovery skipped: OpenRouter API key not configured in settings.');
-        return;
-    }
-
 
     console.log(`Discovering new events using ${aiProvider}...`);
     const today = new Date();
@@ -171,41 +215,111 @@ const runDiscoveryTask = async () => {
     const prompt = `As an expert market researcher for UAE e-commerce, identify key events in the UAE for ${monthName} ${year}. I need a JSON array of objects. Each object must have 'date' (string in YYYY-MM-DD format), 'name' (string), and 'category' (string). Include: 'E-commerce Sale', 'Global Event', 'Cultural', 'Sporting', 'Trending'.`;
 
     try {
-        let newEventsRaw = []; // Initialize as an empty array to prevent crashes
-        
-        if (aiProvider === 'openai') {
-            newEventsRaw = await handleOpenAiRequest(openaiApiKey, [{ role: 'user', content: prompt }], true);
-        } else if (aiProvider === 'openrouter') {
-            newEventsRaw = await handleOpenRouterRequest(openrouterApiKey, [{ role: 'user', content: prompt }], true);
-        } else { // Default to gemini
-            newEventsRaw = await handleGeminiRequest(prompt, true);
-        }
+        let newEventsRaw;
+        if (aiProvider === 'openai') newEventsRaw = await handleOpenAiRequest(openaiApiKey, [{ role: 'user', content: prompt }], true);
+        else if (aiProvider === 'openrouter') newEventsRaw = await handleOpenRouterRequest(openrouterApiKey, [{ role: 'user', content: prompt }], true);
+        else newEventsRaw = await handleGeminiRequest(prompt, true);
 
         const discoveredEvents = await readJSON(DISCOVERED_EVENTS_FILE, []);
         const existingEventKeys = new Set(discoveredEvents.map(e => `${e.name}_${e.date}`));
         
-        // Ensure newEventsRaw is an array before filtering to prevent crashes if the AI returns malformed data
-        const uniqueNewEvents = Array.isArray(newEventsRaw)
-            ? newEventsRaw.filter(e => e.date && e.name && e.category && !existingEventKeys.has(`${e.name}_${e.date}`))
-            : [];
+        const uniqueNewEvents = Array.isArray(newEventsRaw) ? newEventsRaw.filter(e => e.date && e.name && e.category && !existingEventKeys.has(`${e.name}_${e.date}`)) : [];
 
         if (uniqueNewEvents.length > 0) {
             console.log(`Found ${uniqueNewEvents.length} new events!`);
             await writeJSON(DISCOVERED_EVENTS_FILE, [...discoveredEvents, ...uniqueNewEvents]);
-            
             const description = uniqueNewEvents.map(e => `**\`${e.date}\`**: ${e.name} *(${e.category})*`).join('\n');
             await sendDiscordWebhook(webhookUrl, { embeds: [{ title: `🤖 New Events Discovered!`, description, color: 0x2ECC71 }] });
         } else {
             console.log('No new events found.');
         }
 
-        settings.lastAutoDiscoverRun = now;
-        await writeJSON(SETTINGS_FILE, settings);
+        await writeJSON(SETTINGS_FILE, { ...settings, lastAutoDiscoverRun: now });
     } catch (error) {
         console.error('Error during automated discovery task:', error.message);
         if (webhookUrl) {
             await sendDiscordWebhook(webhookUrl, { embeds: [{ title: `🤖 Event Discovery Failed`, description: `The automated task failed to run. Please check the server logs.\nError: \`${error.message}\``, color: 0xE74C3C }] });
         }
+    }
+};
+
+const checkAndSendNotifications = async () => {
+    console.log('Running automated notification task...');
+    const settings = await readJSON(SETTINGS_FILE, {});
+    const { webhookUrl, isAutoNotifyEnabled, notifyDaysBefore, isDailyBriefingEnabled } = settings;
+
+    if (!webhookUrl || (!isAutoNotifyEnabled && !isDailyBriefingEnabled)) {
+        return console.log('Automated notifications disabled or webhook not set.');
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const userEventsData = await readJSON(USER_EVENTS_FILE, []);
+    const discoveredEventsData = await readJSON(DISCOVERED_EVENTS_FILE, []);
+    const specialEvents = getSpecialDates(today.getFullYear());
+    
+    const allEvents = [
+        ...userEventsData.map(e => ({ ...e, date: new Date(e.date) })),
+        ...discoveredEventsData.map(e => ({ ...e, date: new Date(e.date) })),
+        ...specialEvents,
+    ];
+
+    // --- Daily Briefing ---
+    if (isDailyBriefingEnabled) {
+        const todaysEvents = allEvents.filter(e => {
+            const eventDate = new Date(e.date);
+            eventDate.setHours(0, 0, 0, 0);
+            return eventDate.getTime() === today.getTime();
+        });
+
+        if (todaysEvents.length > 0) {
+            const description = todaysEvents.map(e => `• ${e.title || e.name}`).join('\n');
+            const tip = await getMarketingTip();
+            const payload = {
+                embeds: [{
+                    title: "☀️ Good Morning! Here's your daily briefing:",
+                    description, color: 0x3498DB,
+                    fields: [{ name: "💡 AI Marketing Tip", value: tip }],
+                    footer: { text: "Sent from UAE Seller's Smart Calendar" },
+                }]
+            };
+            await sendDiscordWebhook(webhookUrl, payload);
+        } else {
+          console.log("No events for today's briefing.");
+        }
+    }
+
+    // --- Upcoming Event Reminders ---
+    if (isAutoNotifyEnabled && notifyDaysBefore > 0) {
+        const sentNotifications = await readJSON(SENT_NOTIFICATIONS_FILE, []);
+        const sentSet = new Set(sentNotifications);
+        
+        const notificationDate = new Date(today);
+        notificationDate.setDate(today.getDate() + notifyDaysBefore);
+
+        const eventsToNotify = allEvents.filter(e => {
+            const eventDate = new Date(e.date);
+            eventDate.setHours(0, 0, 0, 0);
+            return eventDate.getTime() === notificationDate.getTime();
+        });
+
+        for (const event of eventsToNotify) {
+            const eventId = event.id || `${event.name}_${new Date(event.date).toISOString().split('T')[0]}`;
+            if (!sentSet.has(eventId)) {
+                const payload = {
+                    embeds: [{
+                        title: `🔔 Upcoming Event Reminder`,
+                        description: `**${event.title || event.name}** is happening in **${notifyDaysBefore} days** on ${new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`,
+                        color: 0xF1C40F, // Yellow
+                        footer: { text: "Sent from UAE Seller's Smart Calendar" },
+                    }]
+                };
+                await sendDiscordWebhook(webhookUrl, payload);
+                sentSet.add(eventId);
+            }
+        }
+        await writeJSON(SENT_NOTIFICATIONS_FILE, Array.from(sentSet));
     }
 };
 
@@ -226,6 +340,9 @@ app.get('/api/settings', async (req, res) => {
         aiProvider: 'gemini',
         openaiApiKey: '',
         openrouterApiKey: '',
+        isAutoNotifyEnabled: false,
+        notifyDaysBefore: 7,
+        isDailyBriefingEnabled: false,
     });
     res.json(settings);
 });
@@ -319,9 +436,8 @@ app.post('/api/ai/:action', async (req, res) => {
         let messages = history.map(h => ({ role: h.role === 'model' ? 'assistant' : 'user', content: h.content }));
         messages.push({ role: 'user', content: message });
         
-        // For OpenAI/OpenRouter, it's better to have a system prompt
         const chatMessages = aiProvider === 'gemini' 
-            ? [{ role: 'user', content: `${systemPrompt}\n\nUser: ${message}`}] // Simplified history for Gemini
+            ? [{ role: 'user', content: `${systemPrompt}\n\nUser: ${message}`}]
             : [{ role: 'system', content: systemPrompt }, ...messages];
 
         if (aiProvider === 'openai') {
@@ -351,12 +467,15 @@ app.get('*', (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
+  // Schedule background tasks
   cron.schedule('0 3 * * *', runDiscoveryTask);
   console.log('Scheduled automated event discovery to run daily at 3:00 AM.');
-  // Run once on startup after a short delay to allow the server to initialize
+  cron.schedule('0 8 * * *', checkAndSendNotifications);
+  console.log('Scheduled automated notifications to run daily at 8:00 AM.');
+
+  // Run tasks on startup after a short delay
   setTimeout(() => {
-    runDiscoveryTask().catch(err => {
-        console.error("Fatal error during initial discovery task:", err);
-    });
+    runDiscoveryTask().catch(err => console.error("Error during initial discovery task:", err));
+    checkAndSendNotifications().catch(err => console.error("Error during initial notification task:", err));
   }, 5000); 
 });

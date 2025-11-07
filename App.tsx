@@ -4,7 +4,7 @@ import { Calendar } from './components/Calendar';
 import { EventModal } from './components/EventModal';
 import { Header } from './components/Header';
 import { SettingsModal } from './components/SettingsModal';
-import { type UserEvent, type SpecialDate, type CalendarEvent, type ChatMessage, type SummaryRange, type AiProvider } from './types';
+import { type UserEvent, type SpecialDate, type CalendarEvent, type ChatMessage, type AiProvider } from './types';
 import { getSpecialDates } from './services/uaeDatesService';
 import { discoverEventsForMonth, getChatResponse } from './services/aiService';
 import { sendDiscordWebhook } from './services/discordService';
@@ -93,7 +93,6 @@ const App: React.FC = () => {
   const [editingEvent, setEditingEvent] = useState<UserEvent | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDiscovering, setIsDiscovering] = useState(false);
-  const [isSendingSummary, setIsSendingSummary] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -107,7 +106,9 @@ const App: React.FC = () => {
   const [aiProvider, setAiProvider] = useState<AiProvider>('gemini');
   const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [openrouterApiKey, setOpenrouterApiKey] = useState('');
-
+  const [isAutoNotifyEnabled, setIsAutoNotifyEnabled] = useState(false);
+  const [notifyDaysBefore, setNotifyDaysBefore] = useState(7);
+  const [isDailyBriefingEnabled, setIsDailyBriefingEnabled] = useState(false);
 
   const specialDates = useMemo(
     () => getSpecialDates(currentDate.getFullYear()),
@@ -135,7 +136,6 @@ const App: React.FC = () => {
       const uniqueNewEvents = newEvents.filter(newEvent => !existingEventKeys.has(`${newEvent.name}_${newEvent.date.toDateString()}`));
 
       if (uniqueNewEvents.length > 0) {
-        // The new useEffect hook will handle saving automatically.
         setDiscoveredEvents(prev => [...prev, ...uniqueNewEvents]);
       }
     } catch (error) {
@@ -161,6 +161,9 @@ const App: React.FC = () => {
         setAiProvider(settings.aiProvider || 'gemini');
         setOpenaiApiKey(settings.openaiApiKey || '');
         setOpenrouterApiKey(settings.openrouterApiKey || '');
+        setIsAutoNotifyEnabled(settings.isAutoNotifyEnabled || false);
+        setNotifyDaysBefore(settings.notifyDaysBefore || 7);
+        setIsDailyBriefingEnabled(settings.isDailyBriefingEnabled || false);
       } catch (error) { console.error('Failed to load settings:', error); }
       
       // Fetch server-discovered events
@@ -258,6 +261,9 @@ const App: React.FC = () => {
       aiProvider: AiProvider;
       openaiApiKey: string;
       openrouterApiKey: string;
+      isAutoNotifyEnabled: boolean;
+      notifyDaysBefore: number;
+      isDailyBriefingEnabled: boolean;
   }) => {
     // Update state immediately for responsive UI
     setDiscordWebhookUrl(settings.webhookUrl);
@@ -266,6 +272,9 @@ const App: React.FC = () => {
     setAiProvider(settings.aiProvider);
     setOpenaiApiKey(settings.openaiApiKey);
     setOpenrouterApiKey(settings.openrouterApiKey);
+    setIsAutoNotifyEnabled(settings.isAutoNotifyEnabled);
+    setNotifyDaysBefore(settings.notifyDaysBefore);
+    setIsDailyBriefingEnabled(settings.isDailyBriefingEnabled);
     
     // Save to server
     try {
@@ -280,77 +289,6 @@ const App: React.FC = () => {
     }
     
     setIsSettingsOpen(false);
-  };
-
-  const handleSendSummary = async (range: SummaryRange) => {
-    if (!discordWebhookUrl) {
-      alert("Please set your Discord Webhook URL in settings first.");
-      return;
-    }
-    
-    setIsSendingSummary(true);
-
-    let summaryEvents: CalendarEvent[] = [];
-    let title = '';
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    let endDate = new Date(today);
-
-    if (range === '7days') {
-        endDate.setDate(today.getDate() + 7);
-        title = `🗓️ Upcoming Events: Next 7 Days`;
-    } else if (range === 'month') {
-        endDate.setMonth(today.getMonth() + 1);
-        title = `🗓️ Upcoming Events: Next Month`;
-    } else { // 'year'
-        endDate = new Date(today.getFullYear(), 11, 31);
-        title = `🗓️ Upcoming Events: Rest of ${today.getFullYear()}`;
-    }
-    
-    summaryEvents = allEvents
-      .filter(e => e.date >= today && e.date <= endDate)
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
-
-    let payload;
-
-    if (summaryEvents.length === 0) {
-      payload = {
-        embeds: [{
-          title,
-          description: "✅ No upcoming events found for this period.",
-          color: 0x57F287, // Discord Green
-          footer: { text: "Sent from UAE Seller's Smart Calendar" },
-        }]
-      };
-    } else {
-      const description = summaryEvents
-        .slice(0, 25)
-        .map(event => {
-          const eventName = event.type === 'user' ? event.title : event.name;
-          const dateString = event.date.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' });
-          return `**\`${dateString}\`**: ${eventName}`;
-        })
-        .join('\n');
-      
-      payload = {
-        embeds: [{
-          title,
-          description,
-          color: 0x3498DB, // Discord Blue
-          footer: { text: "Sent from UAE Seller's Smart Calendar" },
-          timestamp: new Date().toISOString(),
-        }]
-      };
-    }
-
-    try {
-      await sendDiscordWebhook(discordWebhookUrl, payload);
-    } catch (error) {
-      console.error("Failed to send summary:", error);
-      alert("Failed to send summary to Discord. Please check your webhook URL and console for errors.");
-    } finally {
-      setIsSendingSummary(false);
-    }
   };
 
   const handleSendMessage = async (message: string) => {
@@ -402,9 +340,6 @@ const App: React.FC = () => {
           isDiscovering={isDiscovering}
           viewMode={viewMode}
           setViewMode={setViewMode}
-          onSendSummary={handleSendSummary}
-          isSendingSummary={isSendingSummary}
-          discordWebhookUrl={discordWebhookUrl}
           onOpenChat={openChat}
         />
         <main>
@@ -440,6 +375,9 @@ const App: React.FC = () => {
           currentAiProvider={aiProvider}
           currentOpenaiApiKey={openaiApiKey}
           currentOpenrouterApiKey={openrouterApiKey}
+          isAutoNotifyEnabled={isAutoNotifyEnabled}
+          notifyDaysBefore={notifyDaysBefore}
+          isDailyBriefingEnabled={isDailyBriefingEnabled}
         />
       )}
       <ChatModal

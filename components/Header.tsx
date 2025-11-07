@@ -1,6 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { SummaryRange } from '../types';
+import React from 'react';
 
 type ViewMode = 'month' | 'week' | 'year';
 
@@ -12,9 +11,6 @@ interface HeaderProps {
   isDiscovering: boolean;
   viewMode: ViewMode;
   setViewMode: (view: ViewMode) => void;
-  onSendSummary: (range: SummaryRange) => void;
-  isSendingSummary: boolean;
-  discordWebhookUrl: string;
   onOpenChat: () => void;
 }
 
@@ -55,15 +51,12 @@ const ChevronRightIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" classNam
 const CogIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>);
 const WandIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 4V2m0 18v-2m5-13h2M2 9h2m13 13l-1.4-1.4M4.4 19.6L3 18.2m16.2.4l-1.4-1.4M3 5.8l1.4 1.4M9 22v-2m0-18V2m13 5h2M2 9h2m-1.6 9.6l1.4-1.4M18.2 3l1.4 1.4m-16.8.4l1.4-1.4M9 2v2m0 18v-2m5-13h-2M4 9H2m13 .5l-1-1M7.5 21.5l-1-1m12-12l-1-1M4.5 7.5l-1-1" /><path d="M12 5.5A6.5 6.5 0 0 0 5.5 12a6.5 6.5 0 0 0 6.5 6.5A6.5 6.5 0 0 0 18.5 12 6.5 6.5 0 0 0 12 5.5z" /></svg>);
 const LoadingSpinner = () => (<svg className="animate-spin h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>);
-const PaperAirplaneIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>);
 const ChatBubbleIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>);
 
 
 // --- Main Header Component ---
-export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onOpenSettings, onDiscoverEvents, isDiscovering, viewMode, setViewMode, onSendSummary, isSendingSummary, discordWebhookUrl, onOpenChat }) => {
-  const [isSummaryMenuOpen, setIsSummaryMenuOpen] = useState(false);
-  const summaryMenuRef = useRef<HTMLDivElement>(null);
-
+export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onOpenSettings, onDiscoverEvents, isDiscovering, viewMode, setViewMode, onOpenChat }) => {
+  
   const handleNavigation = (direction: 'prev' | 'next' | 'today') => {
     if (direction === 'today') {
       setCurrentDate(new Date());
@@ -88,21 +81,6 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onO
     setCurrentDate(newDate);
   };
   
-  const handleSendSummary = (range: SummaryRange) => {
-    onSendSummary(range);
-    setIsSummaryMenuOpen(false);
-  };
-  
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (summaryMenuRef.current && !summaryMenuRef.current.contains(event.target as Node)) {
-        setIsSummaryMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const views: ViewMode[] = ['month', 'week', 'year'];
 
   return (
@@ -143,32 +121,6 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, setCurrentDate, onO
                          {view}
                      </button>
                  ))}
-            </div>
-            <div className="relative" ref={summaryMenuRef}>
-              <button
-                onClick={() => setIsSummaryMenuOpen(prev => !prev)}
-                disabled={isSendingSummary || !discordWebhookUrl}
-                className="p-2 text-gray-400 hover:text-white rounded-full hover:bg-gray-700/80 transition-all duration-200 transform hover:scale-110 active:scale-95 disabled:cursor-not-allowed disabled:text-gray-600"
-                aria-label="Send summary to Discord"
-                title={!discordWebhookUrl ? "Set Webhook URL in settings to enable" : "Send upcoming event summary to Discord"}
-              >
-                {isSendingSummary ? <LoadingSpinner /> : <PaperAirplaneIcon />}
-              </button>
-              {isSummaryMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-gray-700/90 backdrop-blur-md rounded-md shadow-lg z-20 border border-gray-600/50 animate-fadeIn">
-                  <ul className="py-1 text-sm text-gray-200">
-                    <li>
-                      <a href="#" onClick={(e) => { e.preventDefault(); handleSendSummary('7days'); }} className="block px-4 py-2 hover:bg-gray-600/80 transition-colors duration-150">Next 7 Days</a>
-                    </li>
-                    <li>
-                      <a href="#" onClick={(e) => { e.preventDefault(); handleSendSummary('month'); }} className="block px-4 py-2 hover:bg-gray-600/80 transition-colors duration-150">Next Month</a>
-                    </li>
-                    <li>
-                      <a href="#" onClick={(e) => { e.preventDefault(); handleSendSummary('year'); }} className="block px-4 py-2 hover:bg-gray-600/80 transition-colors duration-150">Rest of Year</a>
-                    </li>
-                  </ul>
-                </div>
-              )}
             </div>
             <button
               onClick={onDiscoverEvents}
