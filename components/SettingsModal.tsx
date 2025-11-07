@@ -15,6 +15,8 @@ interface SettingsModalProps {
     aiProvider: AiProvider;
     openaiApiKey: string;
     openrouterApiKey: string;
+    openaiModel: string;
+    openrouterModel: string;
     isAutoNotifyEnabled: boolean;
     notifyDaysBefore: number;
     isDailyBriefingEnabled: boolean;
@@ -26,6 +28,8 @@ interface SettingsModalProps {
   currentAiProvider: AiProvider;
   currentOpenaiApiKey: string;
   currentOpenrouterApiKey: string;
+  currentOpenaiModel: string;
+  currentOpenrouterModel: string;
   isAutoNotifyEnabled: boolean;
   notifyDaysBefore: number;
   isDailyBriefingEnabled: boolean;
@@ -42,6 +46,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   currentAiProvider,
   currentOpenaiApiKey,
   currentOpenrouterApiKey,
+  currentOpenaiModel,
+  currentOpenrouterModel,
   isAutoNotifyEnabled,
   notifyDaysBefore,
   isDailyBriefingEnabled,
@@ -53,6 +59,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [aiProvider, setAiProvider] = useState<AiProvider>(currentAiProvider);
   const [openaiApiKey, setOpenaiApiKey] = useState(currentOpenaiApiKey);
   const [openrouterApiKey, setOpenrouterApiKey] = useState(currentOpenrouterApiKey);
+  const [openaiModel, setOpenaiModel] = useState(currentOpenaiModel);
+  const [openrouterModel, setOpenrouterModel] = useState(currentOpenrouterModel);
   
   const [autoNotify, setAutoNotify] = useState(isAutoNotifyEnabled);
   const [daysBefore, setDaysBefore] = useState(notifyDaysBefore);
@@ -108,6 +116,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       aiProvider,
       openaiApiKey,
       openrouterApiKey,
+      openaiModel,
+      openrouterModel,
       isAutoNotifyEnabled: autoNotify,
       notifyDaysBefore: Number(daysBefore) || 7,
       isDailyBriefingEnabled: dailyBriefing,
@@ -137,9 +147,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 ))}
             </div>
             
-            <div className="p-4 bg-gray-900/50 rounded-md space-y-3">
+            <div className="p-4 bg-gray-900/50 rounded-md space-y-4">
                 {aiProvider === 'gemini' && (
-                    <div>
+                    <div className="animate-fadeIn">
                         <p className="text-sm text-gray-300">Uses the built-in Google Gemini model. The API key is configured on the server by the host.</p>
                          <button type="button" onClick={() => handleTest('gemini')} className={`mt-2 px-3 py-1.5 text-xs font-medium text-white rounded-md transition-all duration-200 transform hover:scale-105 active:scale-95 ${getTestButtonClass('gemini')}`}>
                             {getTestButtonText('gemini')}
@@ -147,24 +157,37 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                 )}
                 {aiProvider === 'openai' && (
-                    <div>
-                        <label htmlFor="openaiApiKey" className="block text-sm font-medium text-gray-300 mb-1">OpenAI API Key</label>
-                        <div className="flex items-center space-x-2">
-                           <input type="password" id="openaiApiKey" value={openaiApiKey} onChange={e => setOpenaiApiKey(e.target.value)} placeholder="sk-..." className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200"/>
-                           <button type="button" onClick={() => handleTest('openai')} disabled={!openaiApiKey} className={`px-4 py-2 text-sm font-medium text-white rounded-md transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:bg-gray-600 disabled:cursor-not-allowed ${getTestButtonClass('openai')}`}>
-                               {getTestButtonText('openai')}
-                           </button>
+                    <div className="space-y-4 animate-fadeIn">
+                        <div>
+                            <label htmlFor="openaiApiKey" className="block text-sm font-medium text-gray-300 mb-1">OpenAI API Key</label>
+                            <div className="flex items-center space-x-2">
+                               <input type="password" id="openaiApiKey" value={openaiApiKey} onChange={e => setOpenaiApiKey(e.target.value)} placeholder="sk-..." className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200"/>
+                               <button type="button" onClick={() => handleTest('openai')} disabled={!openaiApiKey} className={`px-4 py-2 text-sm font-medium text-white rounded-md transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:bg-gray-600 disabled:cursor-not-allowed ${getTestButtonClass('openai')}`}>
+                                   {getTestButtonText('openai')}
+                               </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label htmlFor="openaiModel" className="block text-sm font-medium text-gray-300 mb-1">OpenAI Model Name</label>
+                            <input type="text" id="openaiModel" value={openaiModel} onChange={e => setOpenaiModel(e.target.value)} placeholder="e.g., gpt-4o" className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200"/>
                         </div>
                     </div>
                 )}
                 {aiProvider === 'openrouter' && (
-                    <div>
-                        <label htmlFor="openrouterApiKey" className="block text-sm font-medium text-gray-300 mb-1">OpenRouter API Key</label>
-                        <div className="flex items-center space-x-2">
-                           <input type="password" id="openrouterApiKey" value={openrouterApiKey} onChange={e => setOpenrouterApiKey(e.target.value)} placeholder="sk-or-..." className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200"/>
-                           <button type="button" onClick={() => handleTest('openrouter')} disabled={!openrouterApiKey} className={`px-4 py-2 text-sm font-medium text-white rounded-md transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:bg-gray-600 disabled:cursor-not-allowed ${getTestButtonClass('openrouter')}`}>
-                              {getTestButtonText('openrouter')}
-                           </button>
+                    <div className="space-y-4 animate-fadeIn">
+                        <div>
+                            <label htmlFor="openrouterApiKey" className="block text-sm font-medium text-gray-300 mb-1">OpenRouter API Key</label>
+                            <div className="flex items-center space-x-2">
+                               <input type="password" id="openrouterApiKey" value={openrouterApiKey} onChange={e => setOpenrouterApiKey(e.target.value)} placeholder="sk-or-..." className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200"/>
+                               <button type="button" onClick={() => handleTest('openrouter')} disabled={!openrouterApiKey} className={`px-4 py-2 text-sm font-medium text-white rounded-md transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:bg-gray-600 disabled:cursor-not-allowed ${getTestButtonClass('openrouter')}`}>
+                                  {getTestButtonText('openrouter')}
+                               </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label htmlFor="openrouterModel" className="block text-sm font-medium text-gray-300 mb-1">OpenRouter Model Name</label>
+                            <input type="text" id="openrouterModel" value={openrouterModel} onChange={e => setOpenrouterModel(e.target.value)} placeholder="e.g., anthropic/claude-3-haiku" className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200"/>
+                             <p className="mt-2 text-xs text-gray-400">Find model names on the <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">OpenRouter Models page</a>.</p>
                         </div>
                     </div>
                 )}

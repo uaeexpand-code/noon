@@ -1,6 +1,6 @@
 
 import express from 'express';
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/ai';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
@@ -135,9 +135,9 @@ const handleGeminiRequest = async (prompt, isJson = false) => {
     return isJson ? JSON.parse(text) : text;
 };
 
-const handleOpenAiRequest = async (apiKey, messages, isJson = false) => {
+const handleOpenAiRequest = async (apiKey, model, messages, isJson = false) => {
     const body = {
-        model: "gpt-3.5-turbo",
+        model: model || 'gpt-4o',
         messages,
         ...(isJson && { response_format: { type: "json_object" } }),
     };
@@ -146,15 +146,19 @@ const handleOpenAiRequest = async (apiKey, messages, isJson = false) => {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         body: JSON.stringify(body),
     });
-    if (!response.ok) throw new Error(`OpenAI API error: ${response.statusText}`);
+    if (!response.ok) {
+        const errorBody = await response.text();
+        console.error("OpenAI API Error:", errorBody);
+        throw new Error(`OpenAI API error: ${response.statusText}`);
+    }
     const data = await response.json();
     const content = data.choices[0].message.content;
     return isJson ? JSON.parse(content) : content;
 };
 
-const handleOpenRouterRequest = async (apiKey, messages, isJson = false) => {
+const handleOpenRouterRequest = async (apiKey, model, messages, isJson = false) => {
     const body = {
-        model: "openai/gpt-3.5-turbo",
+        model: model || 'anthropic/claude-3-haiku',
         messages,
         ...(isJson && { response_format: { type: "json_object" } }),
     };
@@ -166,7 +170,11 @@ const handleOpenRouterRequest = async (apiKey, messages, isJson = false) => {
         },
         body: JSON.stringify(body),
     });
-    if (!response.ok) throw new Error(`OpenRouter API error: ${response.statusText}`);
+    if (!response.ok) {
+        const errorBody = await response.text();
+        console.error("OpenRouter API Error:", errorBody);
+        throw new Error(`OpenRouter API error: ${response.statusText}`);
+    }
     const data = await response.json();
     const content = data.choices[0].message.content;
     return isJson ? JSON.parse(content) : content;
@@ -179,11 +187,11 @@ const getMarketingTip = async () => {
     try {
         const prompt = "Give me one short, insightful, and actionable marketing tip for an e-commerce seller in the UAE. Make it specific and creative. Don't add any intro or outro text, just the tip itself.";
         const settings = await readJSON(SETTINGS_FILE, {});
-        const { aiProvider, openaiApiKey, openrouterApiKey } = settings;
+        const { aiProvider, openaiApiKey, openrouterApiKey, openaiModel, openrouterModel } = settings;
         if (aiProvider === 'openai' && openaiApiKey) {
-            return await handleOpenAiRequest(openaiApiKey, [{ role: 'user', content: prompt }]);
+            return await handleOpenAiRequest(openaiApiKey, openaiModel, [{ role: 'user', content: prompt }]);
         } else if (aiProvider === 'openrouter' && openrouterApiKey) {
-            return await handleOpenRouterRequest(openrouterApiKey, [{ role: 'user', content: prompt }]);
+            return await handleOpenRouterRequest(openrouterApiKey, openrouterModel, [{ role: 'user', content: prompt }]);
         } else {
             return await handleGeminiRequest(prompt);
         }
@@ -196,7 +204,7 @@ const getMarketingTip = async () => {
 const runDiscoveryTask = async () => {
     console.log('Running automated discovery task...');
     const settings = await readJSON(SETTINGS_FILE, {});
-    const { aiProvider, openaiApiKey, openrouterApiKey, isAutoDiscoverEnabled, lastAutoDiscoverRun, autoDiscoverFrequency, webhookUrl } = settings;
+    const { aiProvider, openaiApiKey, openrouterApiKey, isAutoDiscoverEnabled, lastAutoDiscoverRun, autoDiscoverFrequency, webhookUrl, openaiModel, openrouterModel } = settings;
 
     if (!isAutoDiscoverEnabled) return console.log('Automated discovery is disabled.');
 
@@ -216,8 +224,8 @@ const runDiscoveryTask = async () => {
 
     try {
         let newEventsRaw;
-        if (aiProvider === 'openai') newEventsRaw = await handleOpenAiRequest(openaiApiKey, [{ role: 'user', content: prompt }], true);
-        else if (aiProvider === 'openrouter') newEventsRaw = await handleOpenRouterRequest(openrouterApiKey, [{ role: 'user', content: prompt }], true);
+        if (aiProvider === 'openai') newEventsRaw = await handleOpenAiRequest(openaiApiKey, openaiModel, [{ role: 'user', content: prompt }], true);
+        else if (aiProvider === 'openrouter') newEventsRaw = await handleOpenRouterRequest(openrouterApiKey, openrouterModel, [{ role: 'user', content: prompt }], true);
         else newEventsRaw = await handleGeminiRequest(prompt, true);
 
         const discoveredEvents = await readJSON(DISCOVERED_EVENTS_FILE, []);
@@ -372,6 +380,8 @@ app.get('/api/settings', async (req, res) => {
         aiProvider: 'gemini',
         openaiApiKey: '',
         openrouterApiKey: '',
+        openaiModel: 'gpt-4o',
+        openrouterModel: 'anthropic/claude-3-haiku',
         isAutoNotifyEnabled: false,
         notifyDaysBefore: 7,
         isDailyBriefingEnabled: false,
@@ -418,10 +428,12 @@ app.post('/api/ai/test', async (req, res) => {
             await handleGeminiRequest("test");
         } else if (provider === 'openai') {
             if (!apiKey) throw new Error("API Key is required.");
-            await handleOpenAiRequest(apiKey, [{ role: 'user', content: 'test' }]);
+            // Use a common, reliable model for testing the key
+            await handleOpenAiRequest(apiKey, 'gpt-3.5-turbo', [{ role: 'user', content: 'test' }]);
         } else if (provider === 'openrouter') {
             if (!apiKey) throw new Error("API Key is required.");
-            await handleOpenRouterRequest(apiKey, [{ role: 'user', content: 'test' }]);
+            // Use a free model for testing the key
+            await handleOpenRouterRequest(apiKey, 'mistralai/mistral-7b-instruct-free', [{ role: 'user', content: 'test' }]);
         } else {
             throw new Error("Invalid provider.");
         }
@@ -437,16 +449,16 @@ app.post('/api/ai/:action', async (req, res) => {
   const { action } = req.params;
   const payload = req.body;
   const settings = await readJSON(SETTINGS_FILE, {});
-  const { aiProvider, openaiApiKey, openrouterApiKey } = settings;
+  const { aiProvider, openaiApiKey, openrouterApiKey, openaiModel, openrouterModel } = settings;
 
   try {
     let result;
     if (action === 'generateMarketingIdeas') {
         const prompt = `You are an expert marketing consultant for e-commerce sellers in the UAE. For the upcoming event '${payload.event.name}' (${payload.event.category}), generate 3 short, actionable, creative marketing ideas. Ensure the output is a valid JSON array of strings.`;
         if (aiProvider === 'openai') {
-            result = await handleOpenAiRequest(openaiApiKey, [{ role: 'user', content: prompt }], true);
+            result = await handleOpenAiRequest(openaiApiKey, openaiModel, [{ role: 'user', content: prompt }], true);
         } else if (aiProvider === 'openrouter') {
-            result = await handleOpenRouterRequest(openrouterApiKey, [{ role: 'user', content: prompt }], true);
+            result = await handleOpenRouterRequest(openrouterApiKey, openrouterModel, [{ role: 'user', content: prompt }], true);
         } else {
             result = await handleGeminiRequest(prompt, true);
         }
@@ -455,9 +467,9 @@ app.post('/api/ai/:action', async (req, res) => {
         const monthName = new Date(year, month).toLocaleString('default', { month: 'long' });
         const prompt = `As an expert market researcher for UAE e-commerce, identify key events in the UAE for ${monthName} ${year}. I need a JSON array of objects. Each object must have 'date' (string in YYYY-MM-DD format), 'name' (string), and 'category' (string). Include 'E-commerce Sale', 'Global Event', 'Cultural', 'Sporting', 'Trending'.`;
         if (aiProvider === 'openai') {
-            result = await handleOpenAiRequest(openaiApiKey, [{ role: 'user', content: prompt }], true);
+            result = await handleOpenAiRequest(openaiApiKey, openaiModel, [{ role: 'user', content: prompt }], true);
         } else if (aiProvider === 'openrouter') {
-            result = await handleOpenRouterRequest(openrouterApiKey, [{ role: 'user', content: prompt }], true);
+            result = await handleOpenRouterRequest(openrouterApiKey, openrouterModel, [{ role: 'user', content: prompt }], true);
         } else {
             result = await handleGeminiRequest(prompt, true);
         }
@@ -474,9 +486,9 @@ app.post('/api/ai/:action', async (req, res) => {
             : [{ role: 'system', content: systemPrompt }, ...messages];
 
         if (aiProvider === 'openai') {
-            result = await handleOpenAiRequest(openaiApiKey, chatMessages);
+            result = await handleOpenAiRequest(openaiApiKey, openaiModel, chatMessages);
         } else if (aiProvider === 'openrouter') {
-            result = await handleOpenRouterRequest(openrouterApiKey, chatMessages);
+            result = await handleOpenRouterRequest(openrouterApiKey, openrouterModel, chatMessages);
         } else {
              const fullPrompt = `${systemPrompt}\n\nConversation History:\n${history.map(h=>`${h.role}: ${h.content}`).join('\n')}\n\nUser: ${message}`;
             result = await handleGeminiRequest(fullPrompt);

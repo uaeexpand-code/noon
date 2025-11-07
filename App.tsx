@@ -105,6 +105,8 @@ const App: React.FC = () => {
   const [aiProvider, setAiProvider] = useState<AiProvider>('gemini');
   const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [openrouterApiKey, setOpenrouterApiKey] = useState('');
+  const [openaiModel, setOpenaiModel] = useState('gpt-4o');
+  const [openrouterModel, setOpenrouterModel] = useState('anthropic/claude-3-haiku');
   const [isAutoNotifyEnabled, setIsAutoNotifyEnabled] = useState(false);
   const [notifyDaysBefore, setNotifyDaysBefore] = useState(7);
   const [isDailyBriefingEnabled, setIsDailyBriefingEnabled] = useState(false);
@@ -166,6 +168,8 @@ const App: React.FC = () => {
         setAiProvider(settings.aiProvider || 'gemini');
         setOpenaiApiKey(settings.openaiApiKey || '');
         setOpenrouterApiKey(settings.openrouterApiKey || '');
+        setOpenaiModel(settings.openaiModel || 'gpt-4o');
+        setOpenrouterModel(settings.openrouterModel || 'anthropic/claude-3-haiku');
         setIsAutoNotifyEnabled(settings.isAutoNotifyEnabled || false);
         setNotifyDaysBefore(settings.notifyDaysBefore || 7);
         setIsDailyBriefingEnabled(settings.isDailyBriefingEnabled || false);
@@ -267,6 +271,8 @@ const App: React.FC = () => {
       aiProvider: AiProvider;
       openaiApiKey: string;
       openrouterApiKey: string;
+      openaiModel: string;
+      openrouterModel: string;
       isAutoNotifyEnabled: boolean;
       notifyDaysBefore: number;
       isDailyBriefingEnabled: boolean;
@@ -279,6 +285,8 @@ const App: React.FC = () => {
     setAiProvider(settings.aiProvider);
     setOpenaiApiKey(settings.openaiApiKey);
     setOpenrouterApiKey(settings.openrouterApiKey);
+    setOpenaiModel(settings.openaiModel);
+    setOpenrouterModel(settings.openrouterModel);
     setIsAutoNotifyEnabled(settings.isAutoNotifyEnabled);
     setNotifyDaysBefore(settings.notifyDaysBefore);
     setIsDailyBriefingEnabled(settings.isDailyBriefingEnabled);
@@ -383,6 +391,8 @@ const App: React.FC = () => {
           currentAiProvider={aiProvider}
           currentOpenaiApiKey={openaiApiKey}
           currentOpenrouterApiKey={openrouterApiKey}
+          currentOpenaiModel={openaiModel}
+          currentOpenrouterModel={openrouterModel}
           isAutoNotifyEnabled={isAutoNotifyEnabled}
           notifyDaysBefore={notifyDaysBefore}
           isDailyBriefingEnabled={isDailyBriefingEnabled}
