@@ -3,6 +3,7 @@ export interface SpecialDate {
   date: Date;
   name: string;
   category: 'National Holiday' | 'Religious' | 'Season' | 'Commercial' | 'E-commerce Sale' | 'Global Event' | 'Cultural' | 'Sporting' | 'Trending' | string;
+  source?: string;
 }
 
 export interface UserEvent {
@@ -10,6 +11,7 @@ export interface UserEvent {
   date: Date;
   title: string;
   description?: string;
+  source?: string;
 }
 
 export type CalendarEvent = (UserEvent & { type: 'user' }) | (SpecialDate & { type: 'special' | 'discovered' });

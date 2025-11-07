@@ -139,7 +139,6 @@ const handleOpenAiRequest = async (apiKey, model, messages, isJson = false) => {
     const body = {
         model: model || 'gpt-4o',
         messages,
-        ...(isJson && { response_format: { type: "json_object" } }),
     };
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: 'POST',
@@ -153,14 +152,26 @@ const handleOpenAiRequest = async (apiKey, model, messages, isJson = false) => {
     }
     const data = await response.json();
     const content = data.choices[0].message.content;
-    return isJson ? JSON.parse(content) : content;
+    
+    if (isJson) {
+        try {
+            return JSON.parse(content);
+        } catch (e) {
+            console.warn("OpenAI response was not raw JSON, checking for markdown block...");
+            const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
+            if (jsonMatch && jsonMatch[1]) {
+                return JSON.parse(jsonMatch[1]);
+            }
+            throw new Error("AI returned a non-JSON response.");
+        }
+    }
+    return content;
 };
 
 const handleOpenRouterRequest = async (apiKey, model, messages, isJson = false) => {
     const body = {
         model: model || 'anthropic/claude-3-haiku',
         messages,
-        ...(isJson && { response_format: { type: "json_object" } }),
     };
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: 'POST',
@@ -177,7 +188,20 @@ const handleOpenRouterRequest = async (apiKey, model, messages, isJson = false) 
     }
     const data = await response.json();
     const content = data.choices[0].message.content;
-    return isJson ? JSON.parse(content) : content;
+    
+    if (isJson) {
+        try {
+            return JSON.parse(content);
+        } catch (e) {
+            console.warn("OpenRouter response was not raw JSON, checking for markdown block...");
+            const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
+            if (jsonMatch && jsonMatch[1]) {
+                return JSON.parse(jsonMatch[1]);
+            }
+            throw new Error("AI returned a non-JSON response.");
+        }
+    }
+    return content;
 };
 
 

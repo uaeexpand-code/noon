@@ -62,9 +62,12 @@ const DayCell: React.FC<{
            <div
               key={event.type === 'user' ? event.id : event.name + index}
               onClick={(e) => event.type === 'user' && handleEventClick(e, event)}
-              className={`text-xs px-1.5 py-0.5 rounded-md truncate transition-colors duration-200 ${getEventTypeStyle(event)}`}
+              className={`flex items-center text-xs px-1.5 py-0.5 rounded-md transition-colors duration-200 overflow-hidden ${getEventTypeStyle(event)}`}
+              title={event.source && event.source !== 'built-in' ? `Source: ${event.source}` : undefined}
             >
-              {event.type === 'user' ? event.title : event.name}
+              {event.source === 'manual' && <span className="mr-1" title="Manual Event">👤</span>}
+              {event.source && event.source !== 'manual' && event.source !== 'built-in' && <span className="mr-1" title={`Discovered by: ${event.source}`}>✨</span>}
+              <span className="truncate">{event.type === 'user' ? event.title : event.name}</span>
             </div>
           ))}
       </div>

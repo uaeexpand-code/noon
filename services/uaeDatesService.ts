@@ -1,3 +1,4 @@
+
 import { type SpecialDate } from '../types';
 
 // Helper function to calculate approximate Islamic holiday dates for a given Gregorian year.
@@ -29,7 +30,7 @@ const BASE_DATES = {
 
 // Note: Islamic holiday dates are approximations. For a real-world app, an API would be better.
 export const getSpecialDates = (year: number): SpecialDate[] => {
-  return [
+  const dates: Omit<SpecialDate, 'source'>[] = [
     { date: new Date(year, 0, 1), name: "New Year's Day", category: 'Global Event' },
     { date: new Date(year, 1, 14), name: "Valentine's Day", category: 'Commercial' },
     { date: new Date(year, 2, 8), name: "International Women's Day", category: 'Global Event' },
@@ -59,4 +60,5 @@ export const getSpecialDates = (year: number): SpecialDate[] => {
     { date: new Date(year, 11, 12), name: "12.12 Sale", category: 'E-commerce Sale' },
     { date: new Date(year, 11, 15), name: "Dubai Shopping Festival Starts", category: 'Commercial' },
   ];
+  return dates.map(d => ({ ...d, source: 'built-in' }));
 };

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { type UserEvent, type SpecialDate } from '../types';
-import { generateMarketingIdeas } from '../services/aiService';
+import { generateMarketingIdeas } from '../services/geminiService';
 import { sendDiscordWebhook } from '../services/discordService';
 
 interface EventModalProps {
@@ -9,7 +9,7 @@ interface EventModalProps {
   onClose: () => void;
   date: Date;
   event: UserEvent | null;
-  onSave: (eventData: Omit<UserEvent, 'id'>) => void;
+  onSave: (eventData: Omit<UserEvent, 'id' | 'source'>) => void;
   onDelete: (eventId: string) => void;
   discordWebhookUrl: string;
 }

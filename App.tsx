@@ -6,7 +6,7 @@ import { Header } from './components/Header';
 import { SettingsModal } from './components/SettingsModal';
 import { type UserEvent, type SpecialDate, type CalendarEvent, type ChatMessage, type AiProvider } from './types';
 import { getSpecialDates } from './services/uaeDatesService';
-import { discoverEventsForMonth, getChatResponse } from './services/aiService';
+import { discoverEventsForMonth, getChatResponse } from './services/geminiService';
 
 // --- Chat Modal Component ---
 const ChatModal: React.FC<{
@@ -145,7 +145,16 @@ const App: React.FC = () => {
       const uniqueNewEvents = newEvents.filter(newEvent => !existingEventKeys.has(getEventKey(newEvent)));
 
       if (uniqueNewEvents.length > 0) {
-        setDiscoveredEvents(prev => [...prev, ...uniqueNewEvents]);
+        let sourceName = aiProvider;
+        if (aiProvider === 'openai') sourceName = openaiModel;
+        if (aiProvider === 'openrouter') sourceName = openrouterModel;
+        
+        const uniqueNewEventsWithSource = uniqueNewEvents.map(event => ({
+            ...event,
+            source: sourceName
+        }));
+
+        setDiscoveredEvents(prev => [...prev, ...uniqueNewEventsWithSource]);
         if (sources.length > 0) {
           setLastDiscoverySources(sources);
         }
@@ -255,11 +264,11 @@ const App: React.FC = () => {
     setEditingEvent(null);
   };
 
-  const addOrUpdateEvent = (event: Omit<UserEvent, 'id'>) => {
+  const addOrUpdateEvent = (event: Omit<UserEvent, 'id' | 'source'>) => {
     if (editingEvent) {
       setUserEvents(prev => prev.map(e => e.id === editingEvent.id ? { ...editingEvent, ...event } : e));
     } else {
-      setUserEvents(prev => [...prev, { ...event, id: Date.now().toString() }]);
+      setUserEvents(prev => [...prev, { ...event, id: Date.now().toString(), source: 'manual' }]);
     }
     closeModal();
   };
