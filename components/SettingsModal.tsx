@@ -1,7 +1,6 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { type AiProvider } from '../types';
-import { testAiConnection } from '../services/aiService';
+import { testAiConnection } from '../services/geminiService';
 
 type TestStatus = 'idle' | 'testing' | 'success' | 'error';
 
@@ -144,6 +143,8 @@ interface SettingsModalProps {
     notifyDaysBefore: number;
     isDailyBriefingEnabled: boolean;
     dailyBriefingTime: string;
+    isChineseHolidayNotificationEnabled: boolean;
+    chineseHolidayNotifyDaysBefore: number;
   }) => void;
   currentWebhookUrl: string;
   isAutoDiscoverEnabled: boolean;
@@ -157,6 +158,8 @@ interface SettingsModalProps {
   notifyDaysBefore: number;
   isDailyBriefingEnabled: boolean;
   dailyBriefingTime: string;
+  isChineseHolidayNotificationEnabled: boolean;
+  chineseHolidayNotifyDaysBefore: number;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -175,6 +178,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   notifyDaysBefore,
   isDailyBriefingEnabled,
   dailyBriefingTime,
+  isChineseHolidayNotificationEnabled,
+  chineseHolidayNotifyDaysBefore
 }) => {
   const [webhookUrl, setWebhookUrl] = useState(currentWebhookUrl);
   const [autoDiscover, setAutoDiscover] = useState(isAutoDiscoverEnabled);
@@ -189,6 +194,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [daysBefore, setDaysBefore] = useState(notifyDaysBefore);
   const [dailyBriefing, setDailyBriefing] = useState(isDailyBriefingEnabled);
   const [briefingTime, setBriefingTime] = useState(dailyBriefingTime);
+  const [chineseHolidaysNotify, setChineseHolidaysNotify] = useState(isChineseHolidayNotificationEnabled);
+  const [chineseHolidaysDaysBefore, setChineseHolidaysDaysBefore] = useState(chineseHolidayNotifyDaysBefore);
 
   const [testStatus, setTestStatus] = useState<Record<AiProvider, TestStatus>>({
       gemini: 'idle',
@@ -245,6 +252,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       notifyDaysBefore: Number(daysBefore) || 7,
       isDailyBriefingEnabled: dailyBriefing,
       dailyBriefingTime: briefingTime,
+      isChineseHolidayNotificationEnabled: chineseHolidaysNotify,
+      chineseHolidayNotifyDaysBefore: Number(chineseHolidaysDaysBefore) || 30,
     });
   };
 
@@ -372,6 +381,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
           
+          {/* --- Holiday Specific Notifications --- */}
+           <div className="space-y-4">
+            <h4 className="text-md font-medium text-gray-200">Holiday Specific Notifications</h4>
+            <div className="p-4 bg-gray-900/50 rounded-md space-y-4">
+                 <div>
+                    <label htmlFor="chinese-holiday-toggle" className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md cursor-pointer">
+                        <span className="text-sm font-medium text-gray-300 pr-4">Enable Chinese Holiday Reminders</span>
+                        <div className="relative inline-flex items-center">
+                           <input type="checkbox" id="chinese-holiday-toggle" checked={chineseHolidaysNotify} onChange={e => setChineseHolidaysNotify(e.target.checked)} className="sr-only peer" />
+                           <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-cyan-500 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
+                       </div>
+                    </label>
+                    {chineseHolidaysNotify && (
+                       <div className="mt-3 animate-fadeIn px-1">
+                         <label htmlFor="chinese-notify-days" className="block text-sm font-medium text-gray-300 mb-1">Notify (days before)</label>
+                         <input type="number" id="chinese-notify-days" value={chineseHolidaysDaysBefore} onChange={e => setChineseHolidaysDaysBefore(parseInt(e.target.value, 10))} min="1" className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200" aria-describedby="chinese-notify-days-description"/>
+                         <p id="chinese-notify-days-description" className="mt-2 text-xs text-gray-400">Sends a reminder for upcoming Chinese holidays.</p>
+                       </div>
+                    )}
+                </div>
+            </div>
+          </div>
+
           {/* --- Automated Discovery --- */}
           <div className="space-y-4">
              <h4 className="text-md font-medium text-gray-200">Automated Event Discovery</h4>

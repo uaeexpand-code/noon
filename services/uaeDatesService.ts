@@ -27,6 +27,50 @@ const BASE_DATES = {
   PROPHETS_BIRTHDAY: new Date(BASE_YEAR, 8, 15),  // Sep 15, 2024
 };
 
+const getChineseHolidaysForYear = (year: number): Omit<SpecialDate, 'source'>[] => {
+    const dates: Omit<SpecialDate, 'source'>[] = [];
+     // Fixed holidays
+    dates.push({ date: new Date(year, 3, 4), name: "Qingming Festival (China)", category: 'Cultural' });
+    dates.push({ date: new Date(year, 4, 1), name: "Labour Day (China)", category: 'Cultural' });
+    dates.push({ date: new Date(year, 9, 1), name: "National Day (China)", category: 'Cultural' });
+
+    // Lunar holidays (hardcoded for accuracy, as simple approximation is unreliable for a lunisolar calendar)
+    const chineseLunarHolidays: { [key: number]: Omit<SpecialDate, 'source' | 'category'>[] } = {
+        2024: [
+        { date: new Date(2024, 1, 10), name: "Chinese New Year" },
+        { date: new Date(2024, 5, 10), name: "Dragon Boat Festival (China)" },
+        { date: new Date(2024, 8, 17), name: "Mid-Autumn Festival (China)" },
+        ],
+        2025: [
+        { date: new Date(2025, 0, 29), name: "Chinese New Year" },
+        { date: new Date(2025, 4, 31), name: "Dragon Boat Festival (China)" },
+        { date: new Date(2025, 9, 6), name: "Mid-Autumn Festival (China)" },
+        ],
+        2026: [
+        { date: new Date(2026, 1, 17), name: "Chinese New Year" },
+        { date: new Date(2026, 5, 19), name: "Dragon Boat Festival (China)" },
+        { date: new Date(2026, 8, 25), name: "Mid-Autumn Festival (China)" },
+        ],
+        2027: [
+            { date: new Date(2027, 1, 6), name: "Chinese New Year" },
+            { date: new Date(2027, 5, 9), name: "Dragon Boat Festival (China)" },
+            { date: new Date(2027, 8, 15), name: "Mid-Autumn Festival (China)" },
+        ]
+    };
+    
+    if (chineseLunarHolidays[year]) {
+        chineseLunarHolidays[year].forEach(holiday => {
+        dates.push({ ...holiday, category: 'Cultural' });
+        });
+    }
+
+    return dates;
+}
+
+export const getChineseHolidays = (year: number): SpecialDate[] => {
+    return getChineseHolidaysForYear(year).map(d => ({...d, source: 'built-in'}));
+}
+
 // Note: Islamic holiday dates are approximations. For a real-world app, an API would be better.
 export const getSpecialDates = (year: number): SpecialDate[] => {
   const dates: Omit<SpecialDate, 'source'>[] = [
@@ -60,41 +104,8 @@ export const getSpecialDates = (year: number): SpecialDate[] => {
     { date: new Date(year, 11, 15), name: "Dubai Shopping Festival Starts", category: 'Commercial' },
   ];
 
-  // --- Add Chinese Holidays for Sellers ---
-  // Fixed holidays
-  dates.push({ date: new Date(year, 3, 4), name: "Qingming Festival (China)", category: 'Cultural' });
-  dates.push({ date: new Date(year, 4, 1), name: "Labour Day (China)", category: 'Cultural' });
-  dates.push({ date: new Date(year, 9, 1), name: "National Day (China)", category: 'Cultural' });
-
-  // Lunar holidays (hardcoded for accuracy, as simple approximation is unreliable for a lunisolar calendar)
-  const chineseLunarHolidays: { [key: number]: Omit<SpecialDate, 'source' | 'category'>[] } = {
-    2024: [
-      { date: new Date(2024, 1, 10), name: "Chinese New Year" },
-      { date: new Date(2024, 5, 10), name: "Dragon Boat Festival (China)" },
-      { date: new Date(2024, 8, 17), name: "Mid-Autumn Festival (China)" },
-    ],
-    2025: [
-      { date: new Date(2025, 0, 29), name: "Chinese New Year" },
-      { date: new Date(2025, 4, 31), name: "Dragon Boat Festival (China)" },
-      { date: new Date(2025, 9, 6), name: "Mid-Autumn Festival (China)" },
-    ],
-    2026: [
-      { date: new Date(2026, 1, 17), name: "Chinese New Year" },
-      { date: new Date(2026, 5, 19), name: "Dragon Boat Festival (China)" },
-      { date: new Date(2026, 8, 25), name: "Mid-Autumn Festival (China)" },
-    ],
-    2027: [
-        { date: new Date(2027, 1, 6), name: "Chinese New Year" },
-        { date: new Date(2027, 5, 9), name: "Dragon Boat Festival (China)" },
-        { date: new Date(2027, 8, 15), name: "Mid-Autumn Festival (China)" },
-    ]
-  };
-  
-  if (chineseLunarHolidays[year]) {
-    chineseLunarHolidays[year].forEach(holiday => {
-      dates.push({ ...holiday, category: 'Cultural' });
-    });
-  }
+  // --- Add Chinese Holidays ---
+  dates.push(...getChineseHolidaysForYear(year));
 
   return dates.map(d => ({ ...d, source: 'built-in' }));
 };

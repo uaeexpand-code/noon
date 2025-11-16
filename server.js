@@ -66,41 +66,8 @@ const getApproximateIslamicDate = (baseYear, baseDate, targetYear) => {
   return dateForTargetYear;
 };
 
-const getSpecialDates = (year) => {
-  const BASE_YEAR = 2024;
-  const BASE_DATES = {
-    RAMADAN_BEGINS: new Date(BASE_YEAR, 2, 11), EID_AL_FITR: new Date(BASE_YEAR, 3, 10),
-    EID_AL_ADHA: new Date(BASE_YEAR, 5, 16), ISLAMIC_NEW_YEAR: new Date(BASE_YEAR, 6, 7),
-    PROPHETS_BIRTHDAY: new Date(BASE_YEAR, 8, 15),
-  };
-  const dates = [
-    { date: new Date(year, 0, 1), name: "New Year's Day", category: 'Global Event' },
-    { date: new Date(year, 1, 14), name: "Valentine's Day", category: 'Commercial' },
-    { date: new Date(year, 2, 8), name: "International Women's Day", category: 'Global Event' },
-    { date: new Date(year, 2, 21), name: "Mother's Day (UAE)", category: 'Commercial' },
-    { date: getApproximateIslamicDate(BASE_YEAR, BASE_DATES.RAMADAN_BEGINS, year), name: "Ramadan Begins (approx.)", category: 'Religious' },
-    { date: getApproximateIslamicDate(BASE_YEAR, BASE_DATES.EID_AL_FITR, year), name: "Eid Al Fitr (approx.)", category: 'Religious' },
-    { date: getApproximateIslamicDate(BASE_YEAR, BASE_DATES.EID_AL_ADHA, year), name: "Eid Al Adha (approx.)", category: 'Religious' },
-    { date: getApproximateIslamicDate(BASE_YEAR, BASE_DATES.ISLAMIC_NEW_YEAR, year), name: "Islamic New Year (approx.)", category: 'Religious' },
-    { date: getApproximateIslamicDate(BASE_YEAR, BASE_DATES.PROPHETS_BIRTHDAY, year), name: "Prophet's Birthday (approx.)", category: 'Religious' },
-    { date: new Date(year, 4, 1), name: "Summer Heat Starts", category: 'Season' },
-    { date: new Date(year, 5, 21), name: "Father's Day", category: 'Commercial' },
-    { date: new Date(year, 6, 15), name: "Amazon Prime Day (approx.)", category: 'E-commerce Sale' },
-    { date: new Date(year, 7, 28), name: "Emirati Women's Day", category: 'National Holiday' },
-    { date: new Date(year, 7, 20), name: "Back to School Season", category: 'Commercial' },
-    { date: new Date(year, 9, 31), name: "Diwali (Commercial)", category: 'Commercial' },
-    { date: new Date(year, 10, 1), name: "Start of Cool Weather", category: 'Season' },
-    { date: new Date(year, 10, 11), name: "Singles' Day Sale (11.11)", category: 'E-commerce Sale' },
-    { date: new Date(year, 10, 29), name: "White/Yellow Friday Sale", category: 'E-commerce Sale' },
-    { date: new Date(year, 11, 1), name: "Commemoration Day", category: 'National Holiday' },
-    { date: new Date(year, 11, 1), name: "Winter Starts", category: 'Season' },
-    { date: new Date(year, 11, 2), name: "UAE National Day", category: 'National Holiday' },
-    { date: new Date(year, 11, 3), name: "UAE National Day Holiday", category: 'National Holiday' },
-    { date: new Date(year, 11, 12), name: "12.12 Sale", category: 'E-commerce Sale' },
-    { date: new Date(year, 11, 15), name: "Dubai Shopping Festival Starts", category: 'Commercial' },
-  ];
-
-  // --- Add Chinese Holidays for Sellers ---
+const getChineseHolidays = (year) => {
+  const dates = [];
   // Fixed holidays
   dates.push({ date: new Date(year, 3, 4), name: "Qingming Festival (China)", category: 'Cultural' });
   dates.push({ date: new Date(year, 4, 1), name: "Labour Day (China)", category: 'Cultural' });
@@ -135,6 +102,44 @@ const getSpecialDates = (year) => {
       dates.push({ ...holiday, category: 'Cultural' });
     });
   }
+  return dates;
+};
+
+const getSpecialDates = (year) => {
+  const BASE_YEAR = 2024;
+  const BASE_DATES = {
+    RAMADAN_BEGINS: new Date(BASE_YEAR, 2, 11), EID_AL_FITR: new Date(BASE_YEAR, 3, 10),
+    EID_AL_ADHA: new Date(BASE_YEAR, 5, 16), ISLAMIC_NEW_YEAR: new Date(BASE_YEAR, 6, 7),
+    PROPHETS_BIRTHDAY: new Date(BASE_YEAR, 8, 15),
+  };
+  const dates = [
+    { date: new Date(year, 0, 1), name: "New Year's Day", category: 'Global Event' },
+    { date: new Date(year, 1, 14), name: "Valentine's Day", category: 'Commercial' },
+    { date: new Date(year, 2, 8), name: "International Women's Day", category: 'Global Event' },
+    { date: new Date(year, 2, 21), name: "Mother's Day (UAE)", category: 'Commercial' },
+    { date: getApproximateIslamicDate(BASE_YEAR, BASE_DATES.RAMADAN_BEGINS, year), name: "Ramadan Begins (approx.)", category: 'Religious' },
+    { date: getApproximateIslamicDate(BASE_YEAR, BASE_DATES.EID_AL_FITR, year), name: "Eid Al Fitr (approx.)", category: 'Religious' },
+    { date: getApproximateIslamicDate(BASE_YEAR, BASE_DATES.EID_AL_ADHA, year), name: "Eid Al Adha (approx.)", category: 'Religious' },
+    { date: getApproximateIslamicDate(BASE_YEAR, BASE_DATES.ISLAMIC_NEW_YEAR, year), name: "Islamic New Year (approx.)", category: 'Religious' },
+    { date: getApproximateIslamicDate(BASE_YEAR, BASE_DATES.PROPHETS_BIRTHDAY, year), name: "Prophet's Birthday (approx.)", category: 'Religious' },
+    { date: new Date(year, 4, 1), name: "Summer Heat Starts", category: 'Season' },
+    { date: new Date(year, 5, 21), name: "Father's Day", category: 'Commercial' },
+    { date: new Date(year, 6, 15), name: "Amazon Prime Day (approx.)", category: 'E-commerce Sale' },
+    { date: new Date(year, 7, 28), name: "Emirati Women's Day", category: 'National Holiday' },
+    { date: new Date(year, 7, 20), name: "Back to School Season", category: 'Commercial' },
+    { date: new Date(year, 9, 31), name: "Diwali (Commercial)", category: 'Commercial' },
+    { date: new Date(year, 10, 1), name: "Start of Cool Weather", category: 'Season' },
+    { date: new Date(year, 10, 11), name: "Singles' Day Sale (11.11)", category: 'E-commerce Sale' },
+    { date: new Date(year, 10, 29), name: "White/Yellow Friday Sale", category: 'E-commerce Sale' },
+    { date: new Date(year, 11, 1), name: "Commemoration Day", category: 'National Holiday' },
+    { date: new Date(year, 11, 1), name: "Winter Starts", category: 'Season' },
+    { date: new Date(year, 11, 2), name: "UAE National Day", category: 'National Holiday' },
+    { date: new Date(year, 11, 3), name: "UAE National Day Holiday", category: 'National Holiday' },
+    { date: new Date(year, 11, 12), name: "12.12 Sale", category: 'E-commerce Sale' },
+    { date: new Date(year, 11, 15), name: "Dubai Shopping Festival Starts", category: 'Commercial' },
+  ];
+  
+  dates.push(...getChineseHolidays(year));
   
   return dates;
 };
@@ -348,9 +353,9 @@ const runDiscoveryTask = async () => {
 const checkAndSendNotifications = async () => {
     console.log('Running automated notification task...');
     const settings = await readJSON(SETTINGS_FILE, {});
-    const { webhookUrl, isAutoNotifyEnabled, notifyDaysBefore, isDailyBriefingEnabled } = settings;
+    const { webhookUrl, isAutoNotifyEnabled, notifyDaysBefore, isDailyBriefingEnabled, isChineseHolidayNotificationEnabled, chineseHolidayNotifyDaysBefore } = settings;
 
-    if (!webhookUrl || (!isAutoNotifyEnabled && !isDailyBriefingEnabled)) {
+    if (!webhookUrl || (!isAutoNotifyEnabled && !isDailyBriefingEnabled && !isChineseHolidayNotificationEnabled)) {
         return console.log('Automated notifications disabled or webhook not set.');
     }
 
@@ -366,6 +371,9 @@ const checkAndSendNotifications = async () => {
         ...discoveredEventsData.map(e => ({ ...e, date: new Date(e.date) })),
         ...specialEvents,
     ];
+
+    const sentNotifications = await readJSON(SENT_NOTIFICATIONS_FILE, []);
+    const sentSet = new Set(sentNotifications);
 
     // --- Daily Briefing ---
     if (isDailyBriefingEnabled) {
@@ -394,16 +402,15 @@ const checkAndSendNotifications = async () => {
 
     // --- Upcoming Event Reminders ---
     if (isAutoNotifyEnabled && notifyDaysBefore > 0) {
-        const sentNotifications = await readJSON(SENT_NOTIFICATIONS_FILE, []);
-        const sentSet = new Set(sentNotifications);
-        
         const notificationDate = new Date(today);
         notificationDate.setDate(today.getDate() + notifyDaysBefore);
 
         const eventsToNotify = allEvents.filter(e => {
             const eventDate = new Date(e.date);
             eventDate.setHours(0, 0, 0, 0);
-            return eventDate.getTime() === notificationDate.getTime();
+            // Exclude Chinese holidays from this general check if they have their own notification system
+            const isChinese = (e.name || '').toLowerCase().includes('china');
+            return eventDate.getTime() === notificationDate.getTime() && !isChinese;
         });
 
         for (const event of eventsToNotify) {
@@ -421,8 +428,39 @@ const checkAndSendNotifications = async () => {
                 sentSet.add(eventId);
             }
         }
-        await writeJSON(SENT_NOTIFICATIONS_FILE, Array.from(sentSet));
     }
+    
+    // --- Chinese Holiday Reminders ---
+    if (isChineseHolidayNotificationEnabled && chineseHolidayNotifyDaysBefore > 0) {
+        const chineseHolidays = getChineseHolidays(today.getFullYear());
+        
+        const notificationDateForChinese = new Date(today);
+        notificationDateForChinese.setDate(today.getDate() + chineseHolidayNotifyDaysBefore);
+
+        const holidaysToNotify = chineseHolidays.filter(h => {
+            const eventDate = new Date(h.date);
+            eventDate.setHours(0,0,0,0);
+            return eventDate.getTime() === notificationDateForChinese.getTime();
+        });
+
+        for (const holiday of holidaysToNotify) {
+            const eventId = `chinese_${holiday.name}_${new Date(holiday.date).toISOString().split('T')[0]}`;
+            if (!sentSet.has(eventId)) {
+                const payload = {
+                    embeds: [{
+                        title: `🇨🇳 Upcoming Chinese Holiday Reminder`,
+                        description: `**${holiday.name}** is happening in **${chineseHolidayNotifyDaysBefore} days** on ${new Date(holiday.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`,
+                        color: 0xE74C3C, // Red
+                        footer: { text: "Sent from UAE Seller's Smart Calendar" },
+                    }]
+                };
+                await sendDiscordWebhook(webhookUrl, payload);
+                sentSet.add(eventId);
+            }
+        }
+    }
+    
+    await writeJSON(SENT_NOTIFICATIONS_FILE, Array.from(sentSet));
 };
 
 // --- Cron Job Management ---
@@ -435,10 +473,10 @@ const rescheduleNotificationTask = async () => {
     }
 
     const settings = await readJSON(SETTINGS_FILE, {});
-    const { dailyBriefingTime = '08:00', isDailyBriefingEnabled, isAutoNotifyEnabled } = settings;
+    const { dailyBriefingTime = '08:00', isDailyBriefingEnabled, isAutoNotifyEnabled, isChineseHolidayNotificationEnabled } = settings;
     
     // Only schedule the job if at least one feature is enabled.
-    if (isDailyBriefingEnabled || isAutoNotifyEnabled) {
+    if (isDailyBriefingEnabled || isAutoNotifyEnabled || isChineseHolidayNotificationEnabled) {
         const [hour, minute] = dailyBriefingTime.split(':');
         
         if (isNaN(parseInt(hour, 10)) || isNaN(parseInt(minute, 10))) {
@@ -480,6 +518,8 @@ app.get('/api/settings', async (req, res) => {
         notifyDaysBefore: 7,
         isDailyBriefingEnabled: false,
         dailyBriefingTime: '08:00',
+        isChineseHolidayNotificationEnabled: false,
+        chineseHolidayNotifyDaysBefore: 30,
     });
     res.json(settings);
 });

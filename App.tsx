@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Calendar } from './components/Calendar';
 import { DayDetailsModal } from './components/DayDetailsModal';
@@ -6,8 +5,9 @@ import { EventModal } from './components/EventModal';
 import { Header } from './components/Header';
 import { SettingsModal } from './components/SettingsModal';
 import { type UserEvent, type SpecialDate, type CalendarEvent, type ChatMessage, type AiProvider } from './types';
-import { getSpecialDates } from './services/uaeDatesService';
+import { getSpecialDates, getChineseHolidays } from './services/uaeDatesService';
 import { discoverEventsForMonth, getChatResponse } from './services/geminiService';
+import { sendDiscordWebhook } from './services/discordService';
 
 // --- Chat Modal Component ---
 const ChatModal: React.FC<{
@@ -98,6 +98,7 @@ const App: React.FC = () => {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [lastDiscoverySources, setLastDiscoverySources] = useState<{ uri: string; title: string; }[]>([]);
   const isInitialMount = useRef(true);
+  const [isCheckingChineseHolidays, setIsCheckingChineseHolidays] = useState(false);
   
   // --- Settings State ---
   const [discordWebhookUrl, setDiscordWebhookUrl] = useState('');
@@ -113,6 +114,8 @@ const App: React.FC = () => {
   const [notifyDaysBefore, setNotifyDaysBefore] = useState(7);
   const [isDailyBriefingEnabled, setIsDailyBriefingEnabled] = useState(false);
   const [dailyBriefingTime, setDailyBriefingTime] = useState('08:00');
+  const [isChineseHolidayNotificationEnabled, setIsChineseHolidayNotificationEnabled] = useState(false);
+  const [chineseHolidayNotifyDaysBefore, setChineseHolidayNotifyDaysBefore] = useState(30);
 
   const specialDates = useMemo(
     () => getSpecialDates(currentDate.getFullYear()),
@@ -189,6 +192,8 @@ const App: React.FC = () => {
         setNotifyDaysBefore(settings.notifyDaysBefore || 7);
         setIsDailyBriefingEnabled(settings.isDailyBriefingEnabled || false);
         setDailyBriefingTime(settings.dailyBriefingTime || '08:00');
+        setIsChineseHolidayNotificationEnabled(settings.isChineseHolidayNotificationEnabled || false);
+        setChineseHolidayNotifyDaysBefore(settings.chineseHolidayNotifyDaysBefore || 30);
       } catch (error) { console.error('Failed to load settings:', error); }
       
       // Fetch server-discovered events
@@ -295,6 +300,8 @@ const App: React.FC = () => {
       notifyDaysBefore: number;
       isDailyBriefingEnabled: boolean;
       dailyBriefingTime: string;
+      isChineseHolidayNotificationEnabled: boolean;
+      chineseHolidayNotifyDaysBefore: number;
   }) => {
     // Update state immediately for responsive UI
     setDiscordWebhookUrl(settings.webhookUrl);
@@ -309,6 +316,8 @@ const App: React.FC = () => {
     setNotifyDaysBefore(settings.notifyDaysBefore);
     setIsDailyBriefingEnabled(settings.isDailyBriefingEnabled);
     setDailyBriefingTime(settings.dailyBriefingTime);
+    setIsChineseHolidayNotificationEnabled(settings.isChineseHolidayNotificationEnabled);
+    setChineseHolidayNotifyDaysBefore(settings.chineseHolidayNotifyDaysBefore);
     
     // Save to server
     try {
@@ -363,6 +372,54 @@ const App: React.FC = () => {
     setIsChatOpen(true);
   };
   
+  const handleCheckChineseHolidays = async () => {
+    if (!discordWebhookUrl) {
+      alert("Please set your Discord Webhook URL in settings first.");
+      return;
+    }
+    setIsCheckingChineseHolidays(true);
+
+    const year = new Date().getFullYear();
+    const holidays = getChineseHolidays(year);
+    const upcomingHolidays = holidays.filter(h => h.date >= new Date()).sort((a,b) => a.date.getTime() - b.date.getTime());
+
+    let payload;
+    if (upcomingHolidays.length > 0) {
+        const description = upcomingHolidays
+            .map(h => `**\`${h.date.toLocaleDateString('en-CA')}\`**: ${h.name}`)
+            .join('\n');
+        payload = {
+            embeds: [{
+                title: `🇨🇳 Upcoming Chinese Holidays for ${year}`,
+                description,
+                color: 0xE74C3C, // Red
+                footer: { text: "Sent from UAE Seller's Smart Calendar" },
+                timestamp: new Date().toISOString(),
+            }]
+        };
+    } else {
+        payload = {
+            embeds: [{
+                title: `🇨🇳 Chinese Holidays for ${year}`,
+                description: `No upcoming Chinese holidays found for the rest of ${year}.`,
+                color: 0x2ECC71, // Green
+                footer: { text: "Sent from UAE Seller's Smart Calendar" },
+                timestamp: new Date().toISOString(),
+            }]
+        };
+    }
+
+    try {
+        await sendDiscordWebhook(discordWebhookUrl, payload);
+        alert('Chinese holiday summary sent to Discord!');
+    } catch (error) {
+        console.error("Failed to send Chinese holiday summary:", error);
+        alert("Failed to send summary. Please check your webhook URL is correct and try again.");
+    } finally {
+        setIsCheckingChineseHolidays(false);
+    }
+  };
+
   return (
     <div className="min-h-screen text-gray-100 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -375,6 +432,8 @@ const App: React.FC = () => {
           viewMode={viewMode}
           setViewMode={setViewMode}
           onOpenChat={openChat}
+          onCheckChineseHolidays={handleCheckChineseHolidays}
+          isCheckingChineseHolidays={isCheckingChineseHolidays}
         />
         {lastDiscoverySources.length > 0 && (
             <div className="my-4 p-4 bg-gray-800 rounded-xl shadow-lg animate-fadeIn border border-teal-500/30">
@@ -446,6 +505,8 @@ const App: React.FC = () => {
           notifyDaysBefore={notifyDaysBefore}
           isDailyBriefingEnabled={isDailyBriefingEnabled}
           dailyBriefingTime={dailyBriefingTime}
+          isChineseHolidayNotificationEnabled={isChineseHolidayNotificationEnabled}
+          chineseHolidayNotifyDaysBefore={chineseHolidayNotifyDaysBefore}
         />
       )}
       <ChatModal
