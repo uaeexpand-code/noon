@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { type CalendarEvent, type UserEvent } from '../types';
 
@@ -54,17 +53,23 @@ const DayCell: React.FC<{
         <span className={dayNumberClasses}>{date.getDate()}</span>
       </div>
       <div className="flex-grow mt-1 space-y-1">
-         {dayEvents.slice(0, MAX_VISIBLE_EVENTS).map((event, index) => (
-           <div
-              key={event.type === 'user' ? event.id : event.name + index}
-              className={`flex items-center text-xs px-1.5 py-0.5 rounded-md transition-colors duration-200 overflow-hidden ${getEventTypeStyle(event)}`}
-              title={event.source && event.source !== 'built-in' ? `Source: ${event.source}` : (event.type === 'user' ? event.title : event.name)}
-            >
-              {event.source === 'manual' && <span className="mr-1" title="Manual Event">👤</span>}
-              {event.source && event.source !== 'manual' && event.source !== 'built-in' && <span className="mr-1" title={`Discovered by: ${event.source}`}>✨</span>}
-              <span className="truncate">{event.type === 'user' ? event.title : event.name}</span>
-            </div>
-          ))}
+         {dayEvents.slice(0, MAX_VISIBLE_EVENTS).map((event, index) => {
+           const eventName = event.type === 'user' ? event.title : event.name;
+           const isChineseEvent = eventName.toLowerCase().includes('china') || eventName.toLowerCase().includes('chinese');
+
+           return (
+             <div
+                key={event.type === 'user' ? event.id : event.name + index}
+                className={`flex items-center text-xs px-1.5 py-0.5 rounded-md transition-colors duration-200 overflow-hidden ${getEventTypeStyle(event)}`}
+                title={event.source && event.source !== 'built-in' ? `Source: ${event.source}` : eventName}
+              >
+                {event.source === 'manual' && <span className="mr-1" title="Manual Event">👤</span>}
+                {event.source && event.source !== 'manual' && event.source !== 'built-in' && <span className="mr-1" title={`Discovered by: ${event.source}`}>✨</span>}
+                {isChineseEvent && <span className="mr-1" aria-label="Chinese holiday">🇨🇳</span>}
+                <span className="truncate">{eventName}</span>
+              </div>
+           );
+         })}
           {hiddenEventsCount > 0 && (
             <div className="text-xs text-cyan-400 font-semibold px-1 py-0.5">
               + {hiddenEventsCount} more

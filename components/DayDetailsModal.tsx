@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { type CalendarEvent, type UserEvent, type SpecialDate } from '../types';
 import { generateMarketingIdeas } from '../services/geminiService';
@@ -85,14 +84,19 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({ date, events, 
 
         <div className="flex-grow p-5 overflow-y-auto space-y-4">
           {events.length > 0 ? (
-            events.map((event, index) => (
+            events.map((event, index) => {
+              const eventName = event.type === 'user' ? event.title : event.name;
+              const isChineseEvent = eventName.toLowerCase().includes('china') || eventName.toLowerCase().includes('chinese');
+              
+              return (
               <div key={event.type === 'user' ? event.id : event.name + index} className={`p-4 bg-gray-900/50 rounded-lg border-l-4 transition-all duration-300 ${getEventTypeStyle(event)}`}>
                 <div className="flex justify-between items-start">
                   <div>
                     <h4 className="font-semibold text-white flex items-center">
                       {event.source === 'manual' && <span className="mr-2" title="Manual Event">👤</span>}
                       {event.source && event.source !== 'manual' && event.source !== 'built-in' && <span className="mr-2" title={`Discovered by: ${event.source}`}>✨</span>}
-                      {event.type === 'user' ? event.title : event.name}
+                      {isChineseEvent && <span className="mr-2" aria-label="Chinese holiday">🇨🇳</span>}
+                      {eventName}
                     </h4>
                     <p className="text-xs text-gray-400">{event.type === 'user' ? 'Your Event' : event.category}</p>
                     {event.type === 'user' && event.description && <p className="text-sm text-gray-300 mt-1 whitespace-pre-wrap">{event.description}</p>}
@@ -105,7 +109,7 @@ export const DayDetailsModal: React.FC<DayDetailsModalProps> = ({ date, events, 
                 </div>
                 <IdeaGenerator event={event} />
               </div>
-            ))
+            )})
           ) : (
             <div className="text-center text-gray-400 py-10">
               <p>No events for this day.</p>
