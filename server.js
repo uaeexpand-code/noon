@@ -1,4 +1,3 @@
-
 import express from 'express';
 import { GoogleGenAI } from '@google/genai';
 import path from 'path';
@@ -74,7 +73,7 @@ const getSpecialDates = (year) => {
     EID_AL_ADHA: new Date(BASE_YEAR, 5, 16), ISLAMIC_NEW_YEAR: new Date(BASE_YEAR, 6, 7),
     PROPHETS_BIRTHDAY: new Date(BASE_YEAR, 8, 15),
   };
-  return [
+  const dates = [
     { date: new Date(year, 0, 1), name: "New Year's Day", category: 'Global Event' },
     { date: new Date(year, 1, 14), name: "Valentine's Day", category: 'Commercial' },
     { date: new Date(year, 2, 8), name: "International Women's Day", category: 'Global Event' },
@@ -100,6 +99,44 @@ const getSpecialDates = (year) => {
     { date: new Date(year, 11, 12), name: "12.12 Sale", category: 'E-commerce Sale' },
     { date: new Date(year, 11, 15), name: "Dubai Shopping Festival Starts", category: 'Commercial' },
   ];
+
+  // --- Add Chinese Holidays for Sellers ---
+  // Fixed holidays
+  dates.push({ date: new Date(year, 3, 4), name: "Qingming Festival (China)", category: 'Cultural' });
+  dates.push({ date: new Date(year, 4, 1), name: "Labour Day (China)", category: 'Cultural' });
+  dates.push({ date: new Date(year, 9, 1), name: "National Day (China)", category: 'Cultural' });
+
+  // Lunar holidays (hardcoded for accuracy)
+  const chineseLunarHolidays = {
+    2024: [
+      { date: new Date(2024, 1, 10), name: "Chinese New Year" },
+      { date: new Date(2024, 5, 10), name: "Dragon Boat Festival" },
+      { date: new Date(2024, 8, 17), name: "Mid-Autumn Festival" },
+    ],
+    2025: [
+      { date: new Date(2025, 0, 29), name: "Chinese New Year" },
+      { date: new Date(2025, 4, 31), name: "Dragon Boat Festival" },
+      { date: new Date(2025, 9, 6), name: "Mid-Autumn Festival" },
+    ],
+    2026: [
+      { date: new Date(2026, 1, 17), name: "Chinese New Year" },
+      { date: new Date(2026, 5, 19), name: "Dragon Boat Festival" },
+      { date: new Date(2026, 8, 25), name: "Mid-Autumn Festival" },
+    ],
+    2027: [
+      { date: new Date(2027, 1, 6), name: "Chinese New Year" },
+      { date: new Date(2027, 5, 9), name: "Dragon Boat Festival" },
+      { date: new Date(2027, 8, 15), name: "Mid-Autumn Festival" },
+    ]
+  };
+  
+  if (chineseLunarHolidays[year]) {
+    chineseLunarHolidays[year].forEach(holiday => {
+      dates.push({ ...holiday, category: 'Cultural' });
+    });
+  }
+  
+  return dates;
 };
 
 
@@ -140,6 +177,9 @@ const handleOpenAiRequest = async (apiKey, model, messages, isJson = false) => {
         model: model || 'gpt-4o',
         messages,
     };
+    if (isJson) {
+        body.response_format = { type: "json_object" };
+    }
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
@@ -173,6 +213,9 @@ const handleOpenRouterRequest = async (apiKey, model, messages, isJson = false) 
         model: model || 'anthropic/claude-3-haiku',
         messages,
     };
+    if (isJson) {
+        body.response_format = { type: "json_object" };
+    }
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: 'POST',
         headers: {

@@ -1,4 +1,3 @@
-
 import { type SpecialDate } from '../types';
 
 // Helper function to calculate approximate Islamic holiday dates for a given Gregorian year.
@@ -60,5 +59,42 @@ export const getSpecialDates = (year: number): SpecialDate[] => {
     { date: new Date(year, 11, 12), name: "12.12 Sale", category: 'E-commerce Sale' },
     { date: new Date(year, 11, 15), name: "Dubai Shopping Festival Starts", category: 'Commercial' },
   ];
+
+  // --- Add Chinese Holidays for Sellers ---
+  // Fixed holidays
+  dates.push({ date: new Date(year, 3, 4), name: "Qingming Festival (China)", category: 'Cultural' });
+  dates.push({ date: new Date(year, 4, 1), name: "Labour Day (China)", category: 'Cultural' });
+  dates.push({ date: new Date(year, 9, 1), name: "National Day (China)", category: 'Cultural' });
+
+  // Lunar holidays (hardcoded for accuracy, as simple approximation is unreliable for a lunisolar calendar)
+  const chineseLunarHolidays: { [key: number]: Omit<SpecialDate, 'source' | 'category'>[] } = {
+    2024: [
+      { date: new Date(2024, 1, 10), name: "Chinese New Year" },
+      { date: new Date(2024, 5, 10), name: "Dragon Boat Festival" },
+      { date: new Date(2024, 8, 17), name: "Mid-Autumn Festival" },
+    ],
+    2025: [
+      { date: new Date(2025, 0, 29), name: "Chinese New Year" },
+      { date: new Date(2025, 4, 31), name: "Dragon Boat Festival" },
+      { date: new Date(2025, 9, 6), name: "Mid-Autumn Festival" },
+    ],
+    2026: [
+      { date: new Date(2026, 1, 17), name: "Chinese New Year" },
+      { date: new Date(2026, 5, 19), name: "Dragon Boat Festival" },
+      { date: new Date(2026, 8, 25), name: "Mid-Autumn Festival" },
+    ],
+    2027: [
+        { date: new Date(2027, 1, 6), name: "Chinese New Year" },
+        { date: new Date(2027, 5, 9), name: "Dragon Boat Festival" },
+        { date: new Date(2027, 8, 15), name: "Mid-Autumn Festival" },
+    ]
+  };
+  
+  if (chineseLunarHolidays[year]) {
+    chineseLunarHolidays[year].forEach(holiday => {
+      dates.push({ ...holiday, category: 'Cultural' });
+    });
+  }
+
   return dates.map(d => ({ ...d, source: 'built-in' }));
 };
