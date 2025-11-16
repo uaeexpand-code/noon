@@ -70,23 +70,23 @@ export const getSpecialDates = (year: number): SpecialDate[] => {
   const chineseLunarHolidays: { [key: number]: Omit<SpecialDate, 'source' | 'category'>[] } = {
     2024: [
       { date: new Date(2024, 1, 10), name: "Chinese New Year" },
-      { date: new Date(2024, 5, 10), name: "Dragon Boat Festival" },
-      { date: new Date(2024, 8, 17), name: "Mid-Autumn Festival" },
+      { date: new Date(2024, 5, 10), name: "Dragon Boat Festival (China)" },
+      { date: new Date(2024, 8, 17), name: "Mid-Autumn Festival (China)" },
     ],
     2025: [
       { date: new Date(2025, 0, 29), name: "Chinese New Year" },
-      { date: new Date(2025, 4, 31), name: "Dragon Boat Festival" },
-      { date: new Date(2025, 9, 6), name: "Mid-Autumn Festival" },
+      { date: new Date(2025, 4, 31), name: "Dragon Boat Festival (China)" },
+      { date: new Date(2025, 9, 6), name: "Mid-Autumn Festival (China)" },
     ],
     2026: [
       { date: new Date(2026, 1, 17), name: "Chinese New Year" },
-      { date: new Date(2026, 5, 19), name: "Dragon Boat Festival" },
-      { date: new Date(2026, 8, 25), name: "Mid-Autumn Festival" },
+      { date: new Date(2026, 5, 19), name: "Dragon Boat Festival (China)" },
+      { date: new Date(2026, 8, 25), name: "Mid-Autumn Festival (China)" },
     ],
     2027: [
         { date: new Date(2027, 1, 6), name: "Chinese New Year" },
-        { date: new Date(2027, 5, 9), name: "Dragon Boat Festival" },
-        { date: new Date(2027, 8, 15), name: "Mid-Autumn Festival" },
+        { date: new Date(2027, 5, 9), name: "Dragon Boat Festival (China)" },
+        { date: new Date(2027, 8, 15), name: "Mid-Autumn Festival (China)" },
     ]
   };
   
